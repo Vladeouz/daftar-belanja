@@ -18,6 +18,7 @@ import { listNotes } from './features/notes/usecases/list-notes.js';
 import { updateNote } from './features/notes/usecases/update-note.js';
 import { registerShoppingItemRoutes } from './features/shopping/http/shopping-items.route.js';
 import { createDrizzleShoppingItemRepository } from './features/shopping/infrastructure/drizzle-shopping-item-repository.js';
+import { clearDoneShoppingItems } from './features/shopping/usecases/clear-done-shopping-items.js';
 import { createShoppingItem } from './features/shopping/usecases/create-shopping-item.js';
 import { deleteShoppingItem } from './features/shopping/usecases/delete-shopping-item.js';
 import { listShoppingItems } from './features/shopping/usecases/list-shopping-items.js';
@@ -75,6 +76,7 @@ export function createApp({
     createShoppingItem: createShoppingItem({ shoppingItems }),
     updateShoppingItem: updateShoppingItem({ shoppingItems }),
     deleteShoppingItem: deleteShoppingItem({ shoppingItems }),
+    clearDoneShoppingItems: clearDoneShoppingItems({ shoppingItems }),
   });
 
   return app;

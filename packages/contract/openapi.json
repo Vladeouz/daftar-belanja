@@ -263,6 +263,17 @@
             "type": "boolean"
           }
         }
+      },
+      "ClearDoneShoppingItemsResult": {
+        "type": "object",
+        "properties": {
+          "deletedCount": {
+            "type": "integer",
+            "minimum": 0,
+            "example": 3
+          }
+        },
+        "required": ["deletedCount"]
       }
     },
     "parameters": {}
@@ -904,6 +915,40 @@
           },
           "422": {
             "description": "Validasi gagal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/shopping-items/clear-done": {
+      "post": {
+        "operationId": "clearDoneShoppingItems",
+        "tags": ["shopping"],
+        "summary": "Hapus semua barang yang sudah dibeli",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Jumlah barang yang dihapus",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClearDoneShoppingItemsResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token tidak ada, tidak valid, atau kedaluwarsa",
             "content": {
               "application/json": {
                 "schema": {

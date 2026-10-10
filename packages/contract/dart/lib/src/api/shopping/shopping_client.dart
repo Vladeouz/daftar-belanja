@@ -5,6 +5,7 @@
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 
+import '../models/clear_done_shopping_items_result.dart';
 import '../models/create_shopping_item_input.dart';
 import '../models/shopping_item.dart';
 import '../models/shopping_item_page.dart';
@@ -47,4 +48,8 @@ abstract class ShoppingClient {
   Future<void> deleteShoppingItem({
     @Path('id') required String id,
   });
+
+  /// Hapus semua barang yang sudah dibeli
+  @POST('/v1/shopping-items/clear-done')
+  Future<ClearDoneShoppingItemsResult> clearDoneShoppingItems();
 }

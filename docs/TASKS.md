@@ -9,7 +9,7 @@ Setiap task dikerjakan dalam satu sesi. Kriteria bertanda **(manual)** diverifik
   - files: ikuti struktur fitur di `docs/conventions.md`
   - done when: setiap kriteria FR-01 sampai FR-03 terbukti oleh test; endpoint baru tercakup test keamanan route yang sudah ada; `pnpm check` hijau
 
-- [ ] T-002 Aksi hapus barang yang sudah dibeli (API)
+- [x] T-002 Aksi hapus barang yang sudah dibeli (API)
   - layer: api · depends_on: T-001 · refs: FR-04, NFR-01
   - files: ikuti struktur fitur di `docs/conventions.md`
   - done when: setiap kriteria FR-04 terbukti oleh test; `pnpm check` hijau

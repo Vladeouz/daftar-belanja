@@ -54,4 +54,6 @@ export interface ShoppingItemRepository {
   update(userId: string, id: string, changes: ShoppingItemChanges): Promise<ShoppingItem | null>;
   // `false` bila tidak ada atau bukan milik `userId`.
   delete(userId: string, id: string): Promise<boolean>;
+  // Hapus semua barang yang sudah dibeli (`isDone`) milik `userId`; mengembalikan jumlahnya.
+  deleteDone(userId: string): Promise<number>;
 }

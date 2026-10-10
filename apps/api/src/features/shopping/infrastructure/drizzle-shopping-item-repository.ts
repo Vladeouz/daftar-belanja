@@ -99,5 +99,13 @@ export function createDrizzleShoppingItemRepository(db: Database): ShoppingItemR
         .returning({ id: shoppingItems.id });
       return rows.length > 0;
     },
+
+    async deleteDone(userId) {
+      const rows = await db
+        .delete(shoppingItems)
+        .where(and(eq(shoppingItems.userId, userId), eq(shoppingItems.isDone, true)))
+        .returning({ id: shoppingItems.id });
+      return rows.length;
+    },
   };
 }

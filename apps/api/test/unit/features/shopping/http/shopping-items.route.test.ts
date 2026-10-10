@@ -54,6 +54,7 @@ describe('shopping item routes', () => {
         ['200', '401', '404', '409', '422'],
       ],
       deleteShoppingItem: [paths['/v1/shopping-items/{id}']?.delete, ['204', '401', '404', '422']],
+      clearDoneShoppingItems: [paths['/v1/shopping-items/clear-done']?.post, ['200', '401']],
     } as const;
 
     for (const [operationId, [operation, statuses]] of Object.entries(operations)) {
@@ -80,8 +81,13 @@ describe('shopping item routes', () => {
         'ShoppingItemStatus',
         'CreateShoppingItemInput',
         'UpdateShoppingItemInput',
+        'ClearDoneShoppingItemsResult',
       ]),
     );
+    expect(schemas.ClearDoneShoppingItemsResult).toMatchObject({
+      required: ['deletedCount'],
+      properties: { deletedCount: { type: 'integer', minimum: 0 } },
+    });
     expect(schemas.CreateShoppingItemInput).toMatchObject({
       required: ['name'],
       properties: {

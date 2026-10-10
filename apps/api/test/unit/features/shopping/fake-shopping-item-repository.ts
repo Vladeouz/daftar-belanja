@@ -75,6 +75,12 @@ export function fakeShoppingItemRepository(options: { now?: () => Date } = {}) {
       if (!owned(userId, id)) return false;
       return rows.delete(id);
     },
+
+    async deleteDone(userId) {
+      const done = [...rows.values()].filter((i) => i.userId === userId && i.isDone);
+      for (const item of done) rows.delete(item.id);
+      return done.length;
+    },
   };
 
   return { repo, rows };

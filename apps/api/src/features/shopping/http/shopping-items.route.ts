@@ -4,6 +4,7 @@ import type { AppEnv } from '../../../core/http/context.js';
 import { errorResponse } from '../../../core/http/errors.js';
 import { PaginationQuerySchema, pageSchema } from '../../../core/http/pagination.js';
 import { SHOPPING_ITEM_STATUSES, type ShoppingItem } from '../domain/shopping-item.js';
+import type { ClearDoneShoppingItems } from '../usecases/clear-done-shopping-items.js';
 import type { CreateShoppingItem } from '../usecases/create-shopping-item.js';
 import type { DeleteShoppingItem } from '../usecases/delete-shopping-item.js';
 import type { ListShoppingItems } from '../usecases/list-shopping-items.js';
@@ -54,6 +55,10 @@ export const UpdateShoppingItemBodySchema = z
     { message: 'At least one of name, quantity, or isDone is required' },
   )
   .openapi('UpdateShoppingItemInput');
+
+export const ClearDoneShoppingItemsResultSchema = z
+  .object({ deletedCount: z.number().int().min(0).openapi({ example: 3 }) })
+  .openapi('ClearDoneShoppingItemsResult');
 
 // `id` yang bukan UUID → 422 `details.id`.
 const ShoppingItemParamsSchema = z.object({
@@ -162,11 +167,28 @@ export const deleteShoppingItemRoute = createRoute({
   },
 });
 
+export const clearDoneShoppingItemsRoute = createRoute({
+  method: 'post',
+  path: '/v1/shopping-items/clear-done',
+  operationId: 'clearDoneShoppingItems',
+  tags: ['shopping'],
+  summary: 'Hapus semua barang yang sudah dibeli',
+  security: bearerSecurity,
+  responses: {
+    200: {
+      description: 'Jumlah barang yang dihapus',
+      content: { 'application/json': { schema: ClearDoneShoppingItemsResultSchema } },
+    },
+    401: unauthenticated,
+  },
+});
+
 export interface ShoppingItemRouteDeps {
   listShoppingItems: ListShoppingItems;
   createShoppingItem: CreateShoppingItem;
   updateShoppingItem: UpdateShoppingItem;
   deleteShoppingItem: DeleteShoppingItem;
+  clearDoneShoppingItems: ClearDoneShoppingItems;
 }
 
 export function registerShoppingItemRoutes(
@@ -192,5 +214,9 @@ export function registerShoppingItemRoutes(
   app.openapi(deleteShoppingItemRoute, async (c) => {
     await deps.deleteShoppingItem(c.var.user.id, c.req.valid('param').id);
     return c.body(null, 204);
+  });
+
+  app.openapi(clearDoneShoppingItemsRoute, async (c) => {
+    return c.json(await deps.clearDoneShoppingItems(c.var.user.id), 200);
   });
 }

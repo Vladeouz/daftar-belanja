@@ -8,7 +8,7 @@ import { createEmulatorTokenVerifier, signUp } from '../../helpers/emulator-toke
 import { insertShoppingItem, insertShoppingItems } from '../../helpers/factories.js';
 import { createTestApp } from '../../helpers/test-app.js';
 
-// FR-01 sampai FR-03: barang belanja lewat HTTP dengan token dari Auth Emulator dan database test.
+// FR-01 sampai FR-04: barang belanja lewat HTTP dengan token dari Auth Emulator dan database test.
 
 const getDb = useTestDb();
 const tokenVerifier = createEmulatorTokenVerifier();
@@ -413,5 +413,48 @@ describe('FR-03: ubah dan tandai', () => {
 
     expect(res.status).toBe(422);
     expect(Object.keys((await errorOf(res)).details ?? {})).toEqual(['id']);
+  });
+});
+
+describe('FR-04: hapus yang sudah dibeli', () => {
+  it('3 barang sudah dibeli dan 2 belum: clear-done → deletedCount 3 dan 2 barang tersisa', async () => {
+    const a = await login();
+    // Barang 1, 3, 5 sudah dibeli; 2 dan 4 belum.
+    const rows = await insertShoppingItems(getDb().db, a.userId, 5, (i) => i % 2 === 1);
+
+    const res = await a.send('POST', '/v1/shopping-items/clear-done');
+
+    expect(res.status).toBe(200);
+    expect(await json(res)).toEqual({ deletedCount: 3 });
+    expect((await listAll(a)).map((i) => i.id)).toEqual(
+      rows
+        .filter((r) => !r.isDone)
+        .map((r) => r.id)
+        .reverse(),
+    );
+  });
+
+  it('barang sudah dibeli milik user lain tidak terhapus', async () => {
+    const a = await login();
+    const b = await login();
+    const others = await insertShoppingItems(getDb().db, a.userId, 2, () => true);
+    await insertShoppingItem(getDb().db, { userId: b.userId, name: 'Milik B', isDone: true });
+
+    const res = await b.send('POST', '/v1/shopping-items/clear-done');
+
+    expect(await json(res)).toEqual({ deletedCount: 1 });
+    expect((await listAll(a)).map((i) => i.id)).toEqual(others.map((r) => r.id).reverse());
+    expect(await listAll(b)).toEqual([]);
+  });
+
+  it('tanpa barang yang sudah dibeli → deletedCount 0 dan daftar tidak berubah', async () => {
+    const a = await login();
+    const item = await createItem(a, { name: 'Telur' });
+
+    const res = await a.send('POST', '/v1/shopping-items/clear-done');
+
+    expect(res.status).toBe(200);
+    expect(await json(res)).toEqual({ deletedCount: 0 });
+    expect(await listAll(a)).toEqual([item]);
   });
 });

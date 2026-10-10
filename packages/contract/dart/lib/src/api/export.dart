@@ -23,6 +23,7 @@ export 'models/shopping_item.dart';
 export 'models/shopping_item_status.dart';
 export 'models/create_shopping_item_input.dart';
 export 'models/update_shopping_item_input.dart';
+export 'models/clear_done_shopping_items_result.dart';
 export 'models/health_status.dart';
 // Root client
 export 'api_client.dart';
