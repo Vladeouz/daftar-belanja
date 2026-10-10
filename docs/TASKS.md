@@ -16,7 +16,7 @@ Setiap task dikerjakan dalam satu sesi. Kriteria bertanda **(manual)** diverifik
 
 ## Fase 2 — Flutter
 
-- [ ] T-003 Fitur shopping (Flutter): domain dan data
+- [x] T-003 Fitur shopping (Flutter): domain dan data
   - layer: app · depends_on: T-002 · refs: FR-05, NFR-02
   - files: ikuti struktur fitur di `docs/conventions.md`
   - done when: setiap use case dan repository teruji, termasuk isi request yang benar-benar dikirim untuk tambah, ubah sebagian field, dan hapus yang sudah dibeli, serta pemetaan `CONFLICT` ke `Failure`; `pnpm check` hijau

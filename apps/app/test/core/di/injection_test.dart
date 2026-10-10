@@ -23,6 +23,13 @@ import 'package:app/features/notes/domain/usecases/list_notes.dart';
 import 'package:app/features/notes/domain/usecases/update_note.dart';
 import 'package:app/features/notes/presentation/cubit/note_form_cubit.dart';
 import 'package:app/features/notes/presentation/cubit/notes_list_cubit.dart';
+import 'package:app/features/shopping/data/api_shopping_item_repository.dart';
+import 'package:app/features/shopping/domain/repositories/shopping_item_repository.dart';
+import 'package:app/features/shopping/domain/usecases/clear_done_shopping_items.dart';
+import 'package:app/features/shopping/domain/usecases/create_shopping_item.dart';
+import 'package:app/features/shopping/domain/usecases/delete_shopping_item.dart';
+import 'package:app/features/shopping/domain/usecases/list_shopping_items.dart';
+import 'package:app/features/shopping/domain/usecases/update_shopping_item.dart';
 
 class MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
@@ -93,6 +100,22 @@ void main() {
       isNot(same(container<NotesListCubit>())),
     );
     expect(container<NoteFormCubit>(), isNot(same(container<NoteFormCubit>())));
+  });
+
+  test('mendaftarkan dependency fitur shopping', () {
+    expect(
+      container<ShoppingItemRepository>(),
+      isA<ApiShoppingItemRepository>(),
+    );
+    expect(
+      container<ShoppingItemRepository>(),
+      same(container<ShoppingItemRepository>()),
+    );
+    expect(container<ListShoppingItems>(), isA<ListShoppingItems>());
+    expect(container<CreateShoppingItem>(), isA<CreateShoppingItem>());
+    expect(container<UpdateShoppingItem>(), isA<UpdateShoppingItem>());
+    expect(container<DeleteShoppingItem>(), isA<DeleteShoppingItem>());
+    expect(container<ClearDoneShoppingItems>(), isA<ClearDoneShoppingItems>());
   });
 
   test('memakai GetIt.instance bila container tidak diberikan', () async {
