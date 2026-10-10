@@ -28,7 +28,7 @@ Setiap task dikerjakan dalam satu sesi. Kriteria bertanda **(manual)** diverifik
 
 ## Fase 3 — Pembersihan
 
-- [ ] T-005 Hapus fitur contoh notes
+- [x] T-005 Hapus fitur contoh notes
   - layer: api, app · depends_on: T-004 · refs: FR-06, D-02
   - files: sesuai panduan "Menghapus fitur contoh notes" di `docs/conventions.md`
   - done when: kriteria FR-06 terbukti; `pnpm check` hijau; **(manual)** user memastikan login lalu daftar belanja tetap berjalan di Chrome
