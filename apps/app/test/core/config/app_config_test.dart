@@ -22,7 +22,7 @@ void main() {
         config,
         const AppConfig(
           apiBaseUrl: 'http://localhost:3000',
-          firebaseProjectId: 'demo-template',
+          firebaseProjectId: 'demo-daftar-belanja',
           firebaseApiKey: 'demo-api-key',
           firebaseAppId: '1:000000000000:android:0000000000000000',
           firebaseMessagingSenderId: '000000000000',
@@ -31,7 +31,7 @@ void main() {
           authEmulatorPort: 9099,
         ),
       );
-      expect(config.firebaseOptions.projectId, 'demo-template');
+      expect(config.firebaseOptions.projectId, 'demo-daftar-belanja');
       expect(config.firebaseOptions.apiKey, 'demo-api-key');
     });
 

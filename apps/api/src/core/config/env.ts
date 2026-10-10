@@ -11,7 +11,7 @@ const OriginList = z
   )
   .pipe(z.array(z.url({ protocol: /^https?$/ }).transform((url) => new URL(url).origin)).min(1));
 
-// URL koneksi PostgreSQL, misalnya `postgres://template:template@localhost:5432/template`.
+// URL koneksi PostgreSQL, misalnya `postgres://template:template@localhost:5432/daftar_belanja`.
 const DatabaseUrl = z.url({ protocol: /^postgres(ql)?$/ });
 
 // `host:port` emulator Firebase, misalnya `localhost:9099`. firebase-admin membacanya langsung dari
@@ -35,7 +35,7 @@ const EnvObject = z.object({
   // port melempar error saat dipakai, jadi lupa mengonfigurasi terlihat, bukan diam-diam palsu.
   PUSH_ADAPTER: z.enum(['none', 'fake', 'fcm']).default('none'),
   STORAGE_ADAPTER: z.enum(['none', 'fake', 'firebase']).default('none'),
-  // Nama bucket, misalnya `demo-template.appspot.com`. Wajib bila STORAGE_ADAPTER=firebase.
+  // Nama bucket, misalnya `demo-daftar-belanja.appspot.com`. Wajib bila STORAGE_ADAPTER=firebase.
   FIREBASE_STORAGE_BUCKET: z.string().min(1).optional(),
   FIREBASE_STORAGE_EMULATOR_HOST: EmulatorHost.optional(),
 });

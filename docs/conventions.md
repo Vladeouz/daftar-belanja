@@ -105,11 +105,11 @@ pnpm 12 menolak versi yang rilis kurang dari sehari (`minimumReleaseAge`). Bila 
 | Service | Port | Isi |
 | --- | --- | --- |
 | `postgres` | 5432 | PostgreSQL 17, data di volume `postgres-data` |
-| `firebase-auth` | 9099 | Auth Emulator, project `demo-template` |
-| `firebase-storage` | 9199 | Storage Emulator, bucket `demo-template.appspot.com` |
+| `firebase-auth` | 9099 | Auth Emulator, project `demo-daftar-belanja` |
+| `firebase-storage` | 9199 | Storage Emulator, bucket `demo-daftar-belanja.appspot.com` |
 
 - Kedua emulator memakai image `profil-a/firebase-emulator:local` dari `docker/firebase-emulator/Dockerfile` (firebase-tools dipin). Project Firebase `demo-*` (`.firebaserc`) agar emulator tidak pernah menyentuh project sungguhan.
-- Nilai compose diambil dari `.env` dengan default yang sama dengan `.env.example` (`${POSTGRES_DB:-template}`), sehingga compose tetap jalan tanpa `.env` (CI).
+- Nilai compose diambil dari `.env` dengan default yang sama dengan `.env.example` (`${POSTGRES_DB:-daftar_belanja}`), sehingga compose tetap jalan tanpa `.env` (CI).
 - Setiap service punya healthcheck, sehingga `--wait` hanya selesai bila layanan benar-benar siap. Healthcheck Storage memakai list objek dengan `Bearer owner`, karena root emulator menjawab `501`.
 - `firebase.json` dan `storage.rules` di-mount ke container. Setelah diubah: `docker compose up -d --wait --force-recreate firebase-storage` (tanpa build ulang). `storage.rules` menolak semua akses client; aturan per proyek ditambahkan di sana bila client mengakses Storage langsung.
 - Data Auth Emulator hanya di memori (hilang saat container dibuat ulang); test membuat akun dengan email acak dan tidak membersihkan emulator.
@@ -257,7 +257,7 @@ Implementasi di `apps/api/src/core/http/errors.ts` dan `error-codes.ts`. Semua e
 
 - Unit test di `apps/api/test/unit/`, mengikuti struktur `src/` (`src/core/http/errors.ts` → `test/unit/core/http/errors.test.ts`). Dijalankan `pnpm --filter api test`.
 - Integration test di `apps/api/test/int/<area>/` dengan akhiran `.int.test.ts`, dijalankan `pnpm --filter api test:int` (butuh `docker compose up -d --wait`). Contoh: `test/int/db/schema.int.test.ts`.
-- Global setup `test/setup/db.ts` membuat ulang database `<nama database DATABASE_URL>_test` (default `template_test`) setiap run dan menjalankan migrasi yang di-commit. Database utama hanya dipakai untuk `DROP`/`CREATE DATABASE`; datanya tidak disentuh. Bila PostgreSQL tidak bisa dihubungi, pesan error menyebut Docker.
+- Global setup `test/setup/db.ts` membuat ulang database `<nama database DATABASE_URL>_test` (default `daftar_belanja_test`) setiap run dan menjalankan migrasi yang di-commit. Database utama hanya dipakai untuk `DROP`/`CREATE DATABASE`; datanya tidak disentuh. Bila PostgreSQL tidak bisa dihubungi, pesan error menyebut Docker.
 - Setiap file integration test memanggil `const getDb = useTestDb();` (`test/helpers/db.ts`) di level atas: membuka pool ke database test dan men-`TRUNCATE` semua tabel `public` sebelum setiap test. File berjalan berurutan (`fileParallelism: false`).
 - Pelanggaran constraint diperiksa lewat SQLSTATE dan nama constraint (`23505` unique, `23514` check, `23503` FK).
 - `test/setup/env.ts` mengisi env default test tanpa menimpa nilai dari shell.
@@ -372,7 +372,7 @@ features/auth/
 
 ### Config
 
-- D-04: nilai dibaca dari `--dart-define-from-file=config/dev.json` (`flutter run -d chrome --web-port 8081 --dart-define-from-file=config/dev.json`). Kunci: `API_BASE_URL`, `FIREBASE_PROJECT_ID` (`demo-template`), `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_MESSAGING_SENDER_ID` (dummy, satu nilai untuk semua platform), `USE_EMULATOR`, `AUTH_EMULATOR_HOST`, `AUTH_EMULATOR_PORT`. Tanpa `flutterfire configure` dan `google-services.json`.
+- D-04: nilai dibaca dari `--dart-define-from-file=config/dev.json` (`flutter run -d chrome --web-port 8081 --dart-define-from-file=config/dev.json`). Kunci: `API_BASE_URL`, `FIREBASE_PROJECT_ID` (`demo-daftar-belanja`), `FIREBASE_API_KEY`, `FIREBASE_APP_ID`, `FIREBASE_MESSAGING_SENDER_ID` (dummy, satu nilai untuk semua platform), `USE_EMULATOR`, `AUTH_EMULATOR_HOST`, `AUTH_EMULATOR_PORT`. Tanpa `flutterfire configure` dan `google-services.json`.
 - `AppConfig.fromEnvironment()` (`core/config/app_config.dart`) membaca `String.fromEnvironment`, lalu `AppConfig.fromMap()` memvalidasi. Nilai kosong atau salah → `ConfigException` yang menyebut nama kunci. Kunci baru ditambahkan bersamaan ke `config/dev.json`, `fromEnvironment`, `fromMap`, dan test-nya.
 - Di Android (bukan web), host `localhost`/`127.0.0.1` di `API_BASE_URL` dan `AUTH_EMULATOR_HOST` diganti `10.0.2.2` oleh kode (`resolveHost`), bukan config terpisah per platform.
 - Build debug Android mengizinkan HTTP (`android:usesCleartextTraffic="true"` hanya di `android/app/src/debug/AndroidManifest.xml`) karena API lokal dan Auth Emulator memakai HTTP.

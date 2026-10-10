@@ -75,11 +75,11 @@ describe('createFirebaseTokenVerifier', () => {
 
 describe('createFirebaseAdmin', () => {
   it('creates independent apps for the same project and deletes them on close', async () => {
-    const a = createFirebaseAdmin('demo-template');
-    const b = createFirebaseAdmin('demo-template');
+    const a = createFirebaseAdmin('demo-daftar-belanja');
+    const b = createFirebaseAdmin('demo-daftar-belanja');
 
     expect(a.app.name).not.toBe(b.app.name);
-    expect(a.app.options.projectId).toBe('demo-template');
+    expect(a.app.options.projectId).toBe('demo-daftar-belanja');
 
     await a.close();
     await b.close();

@@ -29,7 +29,7 @@ class MockFirebaseAuth extends Mock implements FirebaseAuth {}
 void main() {
   const config = AppConfig(
     apiBaseUrl: 'http://10.0.2.2:3000',
-    firebaseProjectId: 'demo-template',
+    firebaseProjectId: 'demo-daftar-belanja',
     firebaseApiKey: 'demo-api-key',
     firebaseAppId: '1:000000000000:android:0000000000000000',
     firebaseMessagingSenderId: '000000000000',

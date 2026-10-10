@@ -26,11 +26,11 @@ jobs:
         env:
           POSTGRES_USER: template
           POSTGRES_PASSWORD: template
-          POSTGRES_DB: template
+          POSTGRES_DB: daftar_belanja
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U template -d template"
+          --health-cmd "pg_isready -U template -d daftar_belanja"
           --health-interval 5s
           --health-timeout 3s
           --health-retries 10

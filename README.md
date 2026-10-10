@@ -1,6 +1,6 @@
-# Template Starter Profil A
+# daftar-belanja
 
-Template untuk proyek Profil A: Flutter (web, Android, iOS) + API Hono + PostgreSQL + Firebase.
+Proyek Profil A, dibuat dari Template Starter Profil A: Flutter (web, Android, iOS) + API Hono + PostgreSQL + Firebase.
 ## Dokumen
 
 | Dokumen | Isi |
@@ -37,7 +37,7 @@ pnpm init-project <nama>
 
 `<nama>` berisi huruf kecil, angka, dan tanda hubung (maksimal 25 karakter), misalnya `gym-membership`. Script ini hanya dijalankan sekali (kedua kalinya ditolak) dan:
 
-- mengganti project Firebase `demo-template` menjadi `demo-<nama>` dan nama database `template` menjadi `<nama>` dengan `-` diganti `_` (database test `<nama>_test`), di semua file yang dilacak Git kecuali `docs/template-build/`;
+- mengganti project Firebase `demo-daftar-belanja` menjadi `demo-<nama>` dan nama database `template` menjadi `<nama>` dengan `-` diganti `_` (database test `<nama>_test`), di semua file yang dilacak Git kecuali `docs/template-build/`;
 - mengganti judul README ini dan `name` di `package.json`;
 - membuat `docs/PRD.md` dan `docs/TASKS.md` berisi placeholder, dan mengosongkan `docs/logs/`.
 
@@ -150,7 +150,7 @@ docker run -d -p 3000:3000 -e DATABASE_URL=<url> -e FIREBASE_PROJECT_ID=<project
 Mencoba image dengan layanan lokal: dari dalam container, `localhost` adalah container itu sendiri, jadi host PostgreSQL dan emulator diganti `host.docker.internal`, dan `NODE_ENV` dari `.env` (`development`) dipakai karena emulator ditolak saat `production`:
 
 ```sh
-docker run --rm -p 3000:3000 --env-file .env -e DATABASE_URL=postgres://template:template@host.docker.internal:5432/template -e FIREBASE_AUTH_EMULATOR_HOST=host.docker.internal:9099 -e FIREBASE_STORAGE_EMULATOR_HOST=host.docker.internal:9199 profil-a/api:local
+docker run --rm -p 3000:3000 --env-file .env -e DATABASE_URL=postgres://template:template@host.docker.internal:5432/daftar_belanja -e FIREBASE_AUTH_EMULATOR_HOST=host.docker.internal:9099 -e FIREBASE_STORAGE_EMULATOR_HOST=host.docker.internal:9199 profil-a/api:local
 ```
 
 Image punya `HEALTHCHECK` ke `/health`, dan `docker stop` (SIGTERM) menjalankan shutdown bertahap seperti di lokal.
@@ -164,8 +164,8 @@ docker compose up -d --wait
 | Service | Port | Isi |
 | --- | --- | --- |
 | `postgres` | 5432 | PostgreSQL 17, data disimpan di volume `postgres-data` |
-| `firebase-auth` | 9099 | Firebase Auth Emulator, project `demo-template` |
-| `firebase-storage` | 9199 | Firebase Storage Emulator, bucket `demo-template.appspot.com` |
+| `firebase-auth` | 9099 | Firebase Auth Emulator, project `demo-daftar-belanja` |
+| `firebase-storage` | 9199 | Firebase Storage Emulator, bucket `demo-daftar-belanja.appspot.com` |
 
 - Build pertama image emulator (`docker/firebase-emulator/Dockerfile`) butuh sekitar 5–7 menit; setelah itu `up` selesai dalam hitungan detik.
 - Nilai diambil dari `.env` bila ada, dengan default yang sama dengan `.env.example`.
