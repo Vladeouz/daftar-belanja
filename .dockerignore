@@ -1,0 +1,12 @@
+# Build context untuk `docker build -f apps/api/Dockerfile .`
+# Allowlist: hanya file yang dibutuhkan image API yang dikirim ke Docker, jadi .env, node_modules
+# lokal (Windows), dan folder lain tidak pernah ikut. File baru yang dibutuhkan build ditambahkan di sini.
+*
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!apps/api/package.json
+!apps/api/tsconfig.json
+!apps/api/tsconfig.build.json
+!apps/api/src
+!apps/api/drizzle

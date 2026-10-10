@@ -1,0 +1,551 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "API",
+    "version": "1"
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Firebase ID token"
+      }
+    },
+    "schemas": {
+      "Health": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["ok"]
+          }
+        },
+        "required": ["status"]
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": ["string", "null"]
+          },
+          "displayName": {
+            "type": ["string", "null"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-01T08:30:00.000Z"
+          }
+        },
+        "required": ["id", "email", "displayName", "createdAt"]
+      },
+      "ErrorBody": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          }
+        },
+        "required": ["error"]
+      },
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "message": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ErrorIssue"
+              }
+            }
+          }
+        },
+        "required": ["code", "message"]
+      },
+      "ErrorCode": {
+        "type": "string",
+        "enum": [
+          "BAD_REQUEST",
+          "UNAUTHENTICATED",
+          "FORBIDDEN",
+          "NOT_FOUND",
+          "CONFLICT",
+          "VALIDATION_ERROR",
+          "INTERNAL_ERROR"
+        ]
+      },
+      "ErrorIssue": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "too_small"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": ["code", "message"]
+      },
+      "NotePage": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Note"
+            }
+          },
+          "nextCursor": {
+            "type": ["string", "null"],
+            "description": "`null` di halaman terakhir"
+          }
+        },
+        "required": ["items", "nextCursor"]
+      },
+      "Note": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-01T08:30:00.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-10-01T08:30:00.000Z"
+          }
+        },
+        "required": ["id", "title", "body", "createdAt", "updatedAt"]
+      },
+      "CreateNoteInput": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "example": "Belanja mingguan"
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 5000,
+            "example": "Beras, telur, sayur"
+          }
+        },
+        "required": ["title"]
+      },
+      "UpdateNoteInput": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120,
+            "example": "Belanja mingguan"
+          },
+          "body": {
+            "type": "string",
+            "maxLength": 5000,
+            "example": "Beras, telur, sayur"
+          }
+        }
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "getHealth",
+        "tags": ["system"],
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "API berjalan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "operationId": "getMe",
+        "tags": ["users"],
+        "summary": "User yang sedang login",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User dari ID token; dibuat saat request pertama",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token tidak ada, tidak valid, atau kedaluwarsa",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/notes": {
+      "get": {
+        "operationId": "listNotes",
+        "tags": ["notes"],
+        "summary": "Daftar note milik user, terbaru lebih dulu",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "description": "Nilai `nextCursor` dari halaman sebelumnya",
+              "example": "MjAyNi0xMC0wMVQwODozMDowMC4wMDBafDNiMjQxMTAxLWUyYmItNDI1NS04Y2FmLTQxMzZjNTY2YTk2Mg"
+            },
+            "required": false,
+            "description": "Nilai `nextCursor` dari halaman sebelumnya",
+            "name": "cursor",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Satu halaman note",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotePage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token tidak ada, tidak valid, atau kedaluwarsa",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validasi gagal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createNote",
+        "tags": ["notes"],
+        "summary": "Buat note",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateNoteInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Note dibuat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Note"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token tidak ada, tidak valid, atau kedaluwarsa",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validasi gagal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/notes/{id}": {
+      "get": {
+        "operationId": "getNote",
+        "tags": ["notes"],
+        "summary": "Satu note milik user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Note",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Note"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token tidak ada, tidak valid, atau kedaluwarsa",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Note tidak ada atau milik user lain",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validasi gagal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateNote",
+        "tags": ["notes"],
+        "summary": "Ubah judul dan/atau isi note",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNoteInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Note diubah",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Note"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token tidak ada, tidak valid, atau kedaluwarsa",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Note tidak ada atau milik user lain",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validasi gagal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteNote",
+        "tags": ["notes"],
+        "summary": "Hapus note",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Note dihapus"
+          },
+          "401": {
+            "description": "Token tidak ada, tidak valid, atau kedaluwarsa",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Note tidak ada atau milik user lain",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validasi gagal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}

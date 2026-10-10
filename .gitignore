@@ -1,0 +1,23 @@
+# Node
+node_modules/
+dist/
+coverage/
+*.log
+.check-logs/
+
+# Env dan secret
+.env
+.env.*
+!.env.example
+
+# Flutter / Dart
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Editor dan OS
+.claude/settings.local.json
+.idea/
+.DS_Store
+Thumbs.db

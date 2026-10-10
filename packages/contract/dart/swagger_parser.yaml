@@ -1,0 +1,12 @@
+swagger_parser:
+  schema_path: ../openapi.json
+  output_directory: lib/src/api
+  name: api
+  language: dart
+  json_serializer: json_serializable
+  root_client: true
+  root_client_name: ApiClient
+  export_file: true
+  unknown_enum_value: true
+  # Field opsional yang null tidak dikirim (API menolak null pada field optional()).
+  include_if_null: true

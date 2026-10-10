@@ -1,0 +1,21 @@
+{
+  "name": "profil-a-template",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.6.0",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "prereq": "node scripts/prereq.mjs",
+    "check": "node scripts/check.mjs",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "contract:generate": "node scripts/contract.mjs generate",
+    "contract:check": "node scripts/contract.mjs check",
+    "init-project": "node scripts/init-project.mjs"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.14"
+  }
+}

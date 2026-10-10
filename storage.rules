@@ -1,0 +1,11 @@
+rules_version = '2';
+
+// Default aman: semua akses client ditolak. API mengakses Storage lewat firebase-admin,
+// yang tidak terikat aturan ini. Proyek membuka akses per path sesuai kebutuhannya.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

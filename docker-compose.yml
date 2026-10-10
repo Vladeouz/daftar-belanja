@@ -1,0 +1,63 @@
+# Layanan lokal: `docker compose up -d --wait`.
+# Nilai dibaca dari .env bila ada; default di bawah sama dengan .env.example.
+
+x-firebase-emulator: &firebase-emulator
+  build:
+    context: docker/firebase-emulator
+  image: profil-a/firebase-emulator:local
+  volumes:
+    - ./firebase.json:/firebase/firebase.json:ro
+    - ./storage.rules:/firebase/storage.rules:ro
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-template}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-template}
+      POSTGRES_DB: ${POSTGRES_DB:-template}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  firebase-auth:
+    <<: *firebase-emulator
+    environment:
+      FIREBASE_EMULATORS: auth
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-demo-template}
+    ports:
+      - "9099:9099"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9099/ > /dev/null"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+
+  firebase-storage:
+    <<: *firebase-emulator
+    environment:
+      FIREBASE_EMULATORS: storage
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-demo-template}
+    ports:
+      - "9199:9199"
+    healthcheck:
+      # Root emulator menjawab 501; list objek dengan token admin emulator menjawab 200 saat siap.
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fs -H 'Authorization: Bearer owner' \"http://localhost:9199/v0/b/$$FIREBASE_PROJECT_ID.appspot.com/o\" > /dev/null",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+
+volumes:
+  postgres-data:
