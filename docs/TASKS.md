@@ -32,3 +32,15 @@ Setiap task dikerjakan dalam satu sesi. Kriteria bertanda **(manual)** diverifik
   - layer: api, app · depends_on: T-004 · refs: FR-06, D-02
   - files: sesuai panduan "Menghapus fitur contoh notes" di `docs/conventions.md`
   - done when: kriteria FR-06 terbukti; `pnpm check` hijau; **(manual)** user memastikan login lalu daftar belanja tetap berjalan di Chrome
+
+## Fase 4 — Perbaikan
+
+- [ ] T-006 Login web tetap memakai Auth Emulator setelah `flutter run` diulang
+  - layer: app · depends_on: T-005 · refs: FR-05
+  - files: `apps/app/lib/main.dart` dan/atau perintah run di `README.md` dan `docs/conventions.md`
+  - done when: penyebab dan solusi tercatat di log (spike); `pnpm check` hijau; **(manual)** di Chrome: login, hentikan `flutter run`, jalankan lagi, lalu logout, login, dan register berjalan tanpa menghapus profil Chrome
+
+- [ ] T-007 Catat pesan kegagalan asli di mode debug
+  - layer: app · depends_on: T-005 · refs: D-03
+  - files: `apps/app/lib/core/` (titik pembuatan `Failure` atau Cubit form), test terkait
+  - done when: `Failure.message` (misalnya `firebase_auth/...: API key not valid`) tercatat di konsol saat mode debug dan tidak di mode rilis, teruji unit test; teks untuk user tetap dari `failure_messages.dart` (D-03); `pnpm check` hijau
