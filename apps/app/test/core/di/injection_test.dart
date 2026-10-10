@@ -30,6 +30,8 @@ import 'package:app/features/shopping/domain/usecases/create_shopping_item.dart'
 import 'package:app/features/shopping/domain/usecases/delete_shopping_item.dart';
 import 'package:app/features/shopping/domain/usecases/list_shopping_items.dart';
 import 'package:app/features/shopping/domain/usecases/update_shopping_item.dart';
+import 'package:app/features/shopping/presentation/cubit/shopping_item_form_cubit.dart';
+import 'package:app/features/shopping/presentation/cubit/shopping_list_cubit.dart';
 
 class MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
@@ -116,6 +118,15 @@ void main() {
     expect(container<UpdateShoppingItem>(), isA<UpdateShoppingItem>());
     expect(container<DeleteShoppingItem>(), isA<DeleteShoppingItem>());
     expect(container<ClearDoneShoppingItems>(), isA<ClearDoneShoppingItems>());
+    // Cubit halaman: baru setiap diminta (ditutup BlocProvider).
+    expect(
+      container<ShoppingListCubit>(),
+      isNot(same(container<ShoppingListCubit>())),
+    );
+    expect(
+      container<ShoppingItemFormCubit>(),
+      isNot(same(container<ShoppingItemFormCubit>())),
+    );
   });
 
   test('memakai GetIt.instance bila container tidak diberikan', () async {

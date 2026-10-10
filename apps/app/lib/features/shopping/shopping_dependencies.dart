@@ -9,8 +9,12 @@ import 'package:app/features/shopping/domain/usecases/create_shopping_item.dart'
 import 'package:app/features/shopping/domain/usecases/delete_shopping_item.dart';
 import 'package:app/features/shopping/domain/usecases/list_shopping_items.dart';
 import 'package:app/features/shopping/domain/usecases/update_shopping_item.dart';
+import 'package:app/features/shopping/presentation/cubit/shopping_item_form_cubit.dart';
+import 'package:app/features/shopping/presentation/cubit/shopping_list_cubit.dart';
 
 /// Dependency fitur shopping. Dipanggil dari `configureDependencies` (butuh `ApiClient`).
+///
+/// Cubit halaman dibuat baru setiap halaman dibuka (`registerFactory`) dan ditutup `BlocProvider`.
 void registerShoppingDependencies(GetIt c) {
   c
     ..registerLazySingleton(
@@ -23,5 +27,15 @@ void registerShoppingDependencies(GetIt c) {
     ..registerLazySingleton(() => CreateShoppingItem(c()))
     ..registerLazySingleton(() => UpdateShoppingItem(c()))
     ..registerLazySingleton(() => DeleteShoppingItem(c()))
-    ..registerLazySingleton(() => ClearDoneShoppingItems(c()));
+    ..registerLazySingleton(() => ClearDoneShoppingItems(c()))
+    ..registerFactory(
+      () => ShoppingListCubit(listItems: c(), updateItem: c(), clearDone: c()),
+    )
+    ..registerFactory(
+      () => ShoppingItemFormCubit(
+        createItem: c(),
+        updateItem: c(),
+        deleteItem: c(),
+      ),
+    );
 }

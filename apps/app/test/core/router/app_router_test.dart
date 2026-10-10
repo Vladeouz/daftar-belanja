@@ -11,9 +11,12 @@ import 'package:app/features/auth/presentation/pages/login_page.dart';
 import 'package:app/features/auth/presentation/pages/register_page.dart';
 import 'package:app/features/notes/domain/repositories/note_repository.dart';
 import 'package:app/features/notes/notes_dependencies.dart';
+import 'package:app/features/shopping/domain/repositories/shopping_item_repository.dart';
+import 'package:app/features/shopping/shopping_dependencies.dart';
 
 import '../../features/auth/fake_auth_repository.dart';
 import '../../features/notes/fake_note_repository.dart';
+import '../../features/shopping/fake_shopping_item_repository.dart';
 
 void main() {
   const email = 'a@example.com';
@@ -21,12 +24,14 @@ void main() {
 
   late GetIt container;
 
-  /// Wiring fitur auth dan notes yang asli, dengan [FakeAuthRepository] menggantikan
-  /// Firebase dan [FakeNoteRepository] menggantikan API.
+  /// Wiring fitur auth, notes, dan shopping yang asli, dengan [FakeAuthRepository]
+  /// menggantikan Firebase serta [FakeNoteRepository] dan [FakeShoppingItemRepository]
+  /// menggantikan API.
   void setUpAuth({bool signedIn = false}) {
     container = GetIt.asNewInstance();
     registerAuthDependencies(container);
     registerNotesDependencies(container);
+    registerShoppingDependencies(container);
     container
       ..unregister<AuthRepository>()
       ..registerSingleton<AuthRepository>(
@@ -36,7 +41,9 @@ void main() {
         ),
       )
       ..unregister<NoteRepository>()
-      ..registerSingleton<NoteRepository>(FakeNoteRepository());
+      ..registerSingleton<NoteRepository>(FakeNoteRepository())
+      ..unregister<ShoppingItemRepository>()
+      ..registerSingleton<ShoppingItemRepository>(FakeShoppingItemRepository());
     addTearDown(container.reset);
   }
 
@@ -72,14 +79,18 @@ void main() {
   group('belum login', () {
     setUp(setUpAuth);
 
-    for (final location in [AppRoutes.home, AppRoutes.notes]) {
+    for (final location in [
+      AppRoutes.home,
+      AppRoutes.shopping,
+      AppRoutes.notes,
+    ]) {
       testWidgets('membuka $location (terlindungi) → diarahkan ke login', (
         tester,
       ) async {
         final router = await pumpApp(tester, initialLocation: location);
 
         expect(find.byType(LoginPage), findsOneWidget);
-        expect(find.text('Catatan'), findsNothing);
+        expect(find.text('Daftar belanja'), findsNothing);
         expect(pathOf(router), AppRoutes.login);
       });
     }
@@ -99,7 +110,7 @@ void main() {
     });
 
     testWidgets(
-      'password salah → pesan jelas; kredensial benar → notes; logout → login',
+      'password salah → pesan jelas; kredensial benar → daftar belanja; logout → login',
       (tester) async {
         final router = await pumpApp(tester);
 
@@ -118,8 +129,8 @@ void main() {
           password: password,
           button: 'Masuk',
         );
-        expect(find.text('Catatan'), findsOneWidget);
-        expect(pathOf(router), AppRoutes.notes);
+        expect(find.text('Daftar belanja'), findsOneWidget);
+        expect(pathOf(router), AppRoutes.shopping);
 
         await tester.tap(find.byTooltip('Keluar'));
         await tester.pumpAndSettle();
@@ -128,55 +139,60 @@ void main() {
       },
     );
 
-    testWidgets('daftar dari halaman login → langsung masuk ke notes', (
-      tester,
-    ) async {
-      final router = await pumpApp(tester);
+    testWidgets(
+      'daftar dari halaman login → langsung masuk ke daftar belanja',
+      (tester) async {
+        final router = await pumpApp(tester);
 
-      await tester.tap(find.text('Belum punya akun? Daftar'));
-      await tester.pumpAndSettle();
-      expect(find.byType(RegisterPage), findsOneWidget);
+        await tester.tap(find.text('Belum punya akun? Daftar'));
+        await tester.pumpAndSettle();
+        expect(find.byType(RegisterPage), findsOneWidget);
 
-      await fillAndSubmit(
-        tester,
-        email: email,
-        password: password,
-        button: 'Daftar',
-      );
-      expect(
-        find.text('Email sudah terdaftar. Silakan masuk.'),
-        findsOneWidget,
-      );
+        await fillAndSubmit(
+          tester,
+          email: email,
+          password: password,
+          button: 'Daftar',
+        );
+        expect(
+          find.text('Email sudah terdaftar. Silakan masuk.'),
+          findsOneWidget,
+        );
 
-      await fillAndSubmit(
-        tester,
-        email: 'baru@example.com',
-        password: password,
-        button: 'Daftar',
-      );
-      expect(find.text('Catatan'), findsOneWidget);
-      expect(pathOf(router), AppRoutes.notes);
-    });
+        await fillAndSubmit(
+          tester,
+          email: 'baru@example.com',
+          password: password,
+          button: 'Daftar',
+        );
+        expect(find.text('Daftar belanja'), findsOneWidget);
+        expect(pathOf(router), AppRoutes.shopping);
+      },
+    );
   });
 
   group('sudah login', () {
     setUp(() => setUpAuth(signedIn: true));
 
-    testWidgets('App membuka notes dengan locale Indonesia', (tester) async {
+    testWidgets('App membuka daftar belanja dengan locale Indonesia', (
+      tester,
+    ) async {
       final router = await pumpApp(tester);
 
-      expect(pathOf(router), AppRoutes.notes);
-      expect(find.text('Catatan'), findsOneWidget);
-      final context = tester.element(find.text('Catatan'));
+      expect(pathOf(router), AppRoutes.shopping);
+      expect(find.text('Daftar belanja'), findsOneWidget);
+      final context = tester.element(find.text('Daftar belanja'));
       expect(Localizations.localeOf(context), const Locale('id'));
       expect(MaterialLocalizations.of(context).okButtonLabel, 'OKE');
     });
 
     for (final location in AppRoutes.public) {
-      testWidgets('membuka $location → diarahkan ke notes', (tester) async {
+      testWidgets('membuka $location → diarahkan ke daftar belanja', (
+        tester,
+      ) async {
         final router = await pumpApp(tester, initialLocation: location);
 
-        expect(pathOf(router), AppRoutes.notes);
+        expect(pathOf(router), AppRoutes.shopping);
       });
     }
 
@@ -192,7 +208,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byType(NotFoundPage), findsNothing);
-        expect(pathOf(router), AppRoutes.notes);
+        expect(pathOf(router), AppRoutes.shopping);
       },
     );
   });

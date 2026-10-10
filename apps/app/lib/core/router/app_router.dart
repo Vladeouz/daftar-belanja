@@ -15,6 +15,11 @@ import 'package:app/features/notes/presentation/cubit/note_form_cubit.dart';
 import 'package:app/features/notes/presentation/cubit/notes_list_cubit.dart';
 import 'package:app/features/notes/presentation/pages/note_form_page.dart';
 import 'package:app/features/notes/presentation/pages/notes_page.dart';
+import 'package:app/features/shopping/domain/entities/shopping_item.dart';
+import 'package:app/features/shopping/presentation/cubit/shopping_item_form_cubit.dart';
+import 'package:app/features/shopping/presentation/cubit/shopping_list_cubit.dart';
+import 'package:app/features/shopping/presentation/pages/shopping_item_form_page.dart';
+import 'package:app/features/shopping/presentation/pages/shopping_page.dart';
 
 /// Path rute app. Fitur menambah path di sini dan rutenya di [createRouter].
 abstract final class AppRoutes {
@@ -24,6 +29,9 @@ abstract final class AppRoutes {
   static const notes = '/notes';
   static const noteNew = '/notes/new';
   static String note(String id) => '/notes/$id';
+  static const shopping = '/shopping';
+  static const shoppingNew = '/shopping/new';
+  static String shoppingItem(String id) => '/shopping/$id';
 
   /// Rute yang boleh dibuka tanpa login. Rute lain dilindungi.
   static const public = {login, register};
@@ -51,7 +59,7 @@ GoRouter createRouter({
     refreshListenable: _StreamListenable(session.stream),
     redirect: (context, state) => _authRedirect(session.state, state),
     routes: [
-      GoRoute(path: AppRoutes.home, redirect: (_, _) => AppRoutes.notes),
+      GoRoute(path: AppRoutes.home, redirect: (_, _) => AppRoutes.shopping),
       GoRoute(
         path: AppRoutes.login,
         builder: (context, state) => BlocProvider(
@@ -70,6 +78,35 @@ GoRouter createRouter({
         builder: (context, state, child) =>
             BlocProvider.value(value: session, child: child),
         routes: [
+          GoRoute(
+            path: AppRoutes.shopping,
+            builder: (context, state) => BlocProvider(
+              create: (_) => c<ShoppingListCubit>()..load(),
+              child: const ShoppingPage(),
+            ),
+            routes: [
+              GoRoute(
+                path: 'new',
+                builder: (context, state) => BlocProvider(
+                  create: (_) => c<ShoppingItemFormCubit>(),
+                  child: const ShoppingItemFormPage(),
+                ),
+              ),
+              GoRoute(
+                path: ':id',
+                // Barang dibawa dari daftar lewat `extra`. API tidak punya GET per barang,
+                // jadi bila dibuka lewat URL (misalnya muat ulang di web) kembali ke daftar.
+                redirect: (context, state) =>
+                    state.extra is ShoppingItem ? null : AppRoutes.shopping,
+                builder: (context, state) => BlocProvider(
+                  create: (_) =>
+                      c<ShoppingItemFormCubit>()
+                        ..edit(state.extra! as ShoppingItem),
+                  child: const ShoppingItemFormPage(),
+                ),
+              ),
+            ],
+          ),
           GoRoute(
             path: AppRoutes.notes,
             builder: (context, state) => BlocProvider(
