@@ -21,7 +21,7 @@ Setiap task dikerjakan dalam satu sesi. Kriteria bertanda **(manual)** diverifik
   - files: ikuti struktur fitur di `docs/conventions.md`
   - done when: setiap use case dan repository teruji, termasuk isi request yang benar-benar dikirim untuk tambah, ubah sebagian field, dan hapus yang sudah dibeli, serta pemetaan `CONFLICT` ke `Failure`; `pnpm check` hijau
 
-- [ ] T-004 Fitur shopping (Flutter): presentation
+- [x] T-004 Fitur shopping (Flutter): presentation
   - layer: app · depends_on: T-003 · refs: FR-05
   - files: ikuti struktur fitur di `docs/conventions.md`
   - done when: perilaku FR-05 teruji dengan `bloc_test` dan widget test; `pnpm check` hijau; **(manual)** user memastikan semua kriteria FR-05 di Chrome dan Android emulator
