@@ -10,7 +10,7 @@ Proyek Profil A, dibuat dari Template Starter Profil A: Flutter (web, Android, i
 | `docs/PRD.md`, `docs/TASKS.md`, `docs/logs/` | Rencana, daftar task, dan log proyek (diisi saat proyek baru dimulai dari template ini). |
 | `docs/template-build/` | PRD, TASKS, dan log pembangunan template ini (rujukan sejarah: alasan di balik setiap konvensi). |
 
-Fitur `notes` di API dan Flutter adalah contoh pola lengkap dari database sampai UI, untuk ditiru lalu dihapus (lihat "Menghapus fitur contoh notes" di `docs/conventions.md`).
+Fitur `shopping` di API dan Flutter adalah contoh pola lengkap dari database sampai UI; `docs/conventions.md` merujuk file-file-nya sebagai contoh untuk fitur baru.
 
 ## Prasyarat
 

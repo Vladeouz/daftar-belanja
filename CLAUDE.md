@@ -48,4 +48,4 @@ Setelah menyelesaikan atau menghentikan task, tulis `docs/logs/T-xxx.md` dan com
 
 ## Fitur contoh
 
-- Fitur `notes` (API dan Flutter) adalah CONTOH: tiru polanya untuk fitur baru, lalu hapus dalam task tersendiri setelah fitur proyek pertama menggantikannya sebagai contoh (langkahnya di `docs/conventions.md`, bagian "Menghapus fitur contoh notes"). Jangan menambah perilaku proyek ke fitur `notes`.
+- Fitur `shopping` (API dan Flutter) adalah contoh pola yang dirujuk `docs/conventions.md`: tiru polanya untuk fitur baru. Fitur contoh `notes` dari template sudah dihapus (T-005).

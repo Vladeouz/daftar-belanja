@@ -251,6 +251,45 @@ describe('FR-02: lihat dan filter', () => {
       cursor: [{ code: 'custom', message: 'Invalid cursor' }],
     });
   });
+
+  it('tidak ada duplikat bila beberapa barang jatuh di milidetik yang sama', async () => {
+    const a = await login();
+    // Tiga barang dikirim dengan mikrodetik berbeda di milidetik .123 (dibulatkan database menjadi
+    // created_at yang sama), dua barang dengan created_at identik, dan satu barang lebih baru.
+    const { rows } = await getDb().pool.query<{ id: string; name: string }>(
+      `insert into shopping_items (user_id, name, created_at) values
+         ($1, 'ms-a', '2026-10-01T08:00:00.123100Z'),
+         ($1, 'ms-b', '2026-10-01T08:00:00.123200Z'),
+         ($1, 'ms-c', '2026-10-01T08:00:00.123400Z'),
+         ($1, 'same-1', '2026-10-01T07:00:00Z'),
+         ($1, 'same-2', '2026-10-01T07:00:00Z'),
+         ($1, 'newest', '2026-10-01T09:00:00Z')
+       returning id, name`,
+      [a.userId],
+    );
+    const idDesc = (names: string[]) =>
+      rows
+        .filter((r) => names.includes(r.name))
+        .map((r) => r.id)
+        .sort()
+        .reverse();
+
+    const pages = await collect(a, 'limit=1');
+
+    const items = pages.flatMap((p) => p.items);
+    expect(items).toHaveLength(6);
+    expect(new Set(items.map((i) => i.id)).size).toBe(6);
+    expect(pages.at(-1)?.nextCursor).toBeNull();
+    // Milidetik sama → urutan ditentukan id DESC.
+    expect(items.map((i) => i.id)).toEqual([
+      ...idDesc(['newest']),
+      ...idDesc(['ms-a', 'ms-b', 'ms-c']),
+      ...idDesc(['same-1', 'same-2']),
+    ]);
+    expect(items.slice(1, 4).map((i) => i.createdAt)).toEqual(
+      Array(3).fill('2026-10-01T08:00:00.123Z'),
+    );
+  });
 });
 
 describe('FR-03: ubah dan tandai', () => {

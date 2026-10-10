@@ -115,15 +115,15 @@ void main() {
     );
 
     await dioWith(adapter).post<Object?>(
-      '/v1/notes',
-      data: {'title': 'Judul'},
+      '/v1/shopping-items',
+      data: {'name': 'Susu'},
       queryParameters: {'x': '1'},
     );
 
     final [first, retry] = adapter.requests;
     expect(retry.method, 'POST');
     expect(retry.uri, first.uri);
-    expect(retry.data, {'title': 'Judul'});
+    expect(retry.data, {'name': 'Susu'});
   });
 
   test('401 tanpa user login → tidak refresh dan tidak mengulang', () async {

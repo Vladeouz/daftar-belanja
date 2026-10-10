@@ -7,7 +7,6 @@ import 'package:app/core/config/app_config.dart';
 import 'package:app/core/network/create_dio.dart';
 import 'package:app/core/network/token_provider.dart';
 import 'package:app/features/auth/auth_dependencies.dart';
-import 'package:app/features/notes/notes_dependencies.dart';
 import 'package:app/features/shopping/shopping_dependencies.dart';
 
 /// Container dependency app. Widget dan Cubit mengambil dependency lewat konstruktor;
@@ -35,6 +34,5 @@ void configureDependencies({
     ..registerLazySingleton<ApiClient>(() => ApiClient(c()));
 
   registerAuthDependencies(c);
-  registerNotesDependencies(c);
   registerShoppingDependencies(c);
 }

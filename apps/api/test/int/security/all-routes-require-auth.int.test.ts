@@ -28,7 +28,7 @@ const routes = [
 // database utama.
 const app = () => createTestApp({ db: getDb().db, tokenVerifier });
 
-// `/v1/notes/:id` → `/v1/notes/<uuid>` agar validasi path tidak mendahului autentikasi.
+// `/v1/shopping-items/:id` → `/v1/shopping-items/<uuid>` agar validasi path tidak mendahului autentikasi.
 const concretePath = (path: string) => path.replace(/:[^/]+/g, () => randomUUID());
 
 const v1Routes = routes.filter((r) => r.path.startsWith('/v1/'));

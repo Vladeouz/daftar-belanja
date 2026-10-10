@@ -278,6 +278,22 @@ void main() {
     expect(names(tester), ['Barang 2', 'Diubah']);
   });
 
+  testWidgets('kembali dari form tanpa hasil → halaman pertama dimuat ulang', (
+    tester,
+  ) async {
+    setUpShopping(initialCount: 1);
+    await pumpApp(tester);
+
+    await tester.tap(find.text('Barang 1'));
+    await tester.pumpAndSettle();
+    // Data berubah di luar daftar ini (misalnya dari perangkat lain).
+    await shopping.create(name: 'Dari tempat lain');
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+
+    expect(names(tester), ['Dari tempat lain', 'Barang 1']);
+  });
+
   testWidgets('hapus barang dari form → hilang dari daftar', (tester) async {
     setUpShopping(initialCount: 2);
     await pumpApp(tester);

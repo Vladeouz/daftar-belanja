@@ -204,14 +204,14 @@ D-06: layanan luar yang tidak punya emulator atau aturannya berbeda per proyek d
 
 ## Pagination
 
-Helper di `apps/api/src/core/http/pagination.ts`. Contoh route: `listNotesRoute` di `apps/api/src/features/notes/http/notes.route.ts`; contoh repository: `listByUser` di `features/notes/infrastructure/drizzle-note-repository.ts`.
+Helper di `apps/api/src/core/http/pagination.ts`. Contoh route: `listShoppingItemsRoute` di `apps/api/src/features/shopping/http/shopping-items.route.ts` (dengan filter `status`); contoh repository: `listByUser` di `features/shopping/infrastructure/drizzle-shopping-item-repository.ts`.
 
 - Query `?limit=20&cursor=<opaque>`: pakai `PaginationQuerySchema` sebagai `request.query`, atau `PaginationQuerySchema.extend({ ... })` bila route punya filter. `limit` 1–100, default 20. Handler menerima `cursor` yang sudah di-decode (`{ createdAt, id }` atau `undefined`).
 - Cursor rusak → `422 VALIDATION_ERROR` dengan `details.cursor` (`custom`, `Invalid cursor`). Hanya bentuk kanonis hasil `encodeCursor` yang diterima.
 - Respons `{ items, nextCursor }` dengan skema `pageSchema(ItemSchema, '<Item>Page')`; nama kedua menjadi nama komponen OpenAPI dan kelas Dart. `nextCursor` `null` di halaman terakhir.
 - Cursor adalah base64url dari `createdAt|id`, urutan `created_at DESC, id DESC`. Repository mengambil `limit + 1` baris dengan kondisi `(created_at, id) < (cursor.createdAt, cursor.id)`, lalu `buildPage(rows, limit, positionOf)` membuang baris tambahan dan membentuk `nextCursor`.
-- **Presisi timestamp.** Semua timestamp berpresisi milidetik (lihat Database), sama dengan `Date`, jadi repository memberi `positionOf` nilai `createdAt` (`Date`) dari baris apa adanya dan membandingkan `(created_at, id) < (${cursor.createdAt}::timestamptz, ${cursor.id}::uuid)`. Baris yang jatuh di milidetik yang sama diurutkan `id DESC` tanpa duplikat (dijaga `test/int/notes/notes.int.test.ts` › tidak ada duplikat bila beberapa note jatuh di milidetik yang sama). Decoder cursor tetap menerima 0–6 digit pecahan.
-- Index pagination per pemilik: `index(...).on(table.userId, table.createdAt.desc().nullsFirst(), table.id.desc().nullsFirst())`. `nullsFirst()` wajib: tanpa itu Drizzle menulis `DESC NULLS LAST`, yang tidak cocok dengan `ORDER BY ... DESC`, sehingga PostgreSQL tetap melakukan `Sort` (dicek dengan `EXPLAIN` di `test/int/notes/notes-schema.int.test.ts`).
+- **Presisi timestamp.** Semua timestamp berpresisi milidetik (lihat Database), sama dengan `Date`, jadi repository memberi `positionOf` nilai `createdAt` (`Date`) dari baris apa adanya dan membandingkan `(created_at, id) < (${cursor.createdAt}::timestamptz, ${cursor.id}::uuid)`. Baris yang jatuh di milidetik yang sama diurutkan `id DESC` tanpa duplikat (dijaga `test/int/shopping/shopping-items.int.test.ts` › tidak ada duplikat bila beberapa barang jatuh di milidetik yang sama). Decoder cursor tetap menerima 0–6 digit pecahan.
+- Index pagination per pemilik: `index(...).on(table.userId, table.createdAt.desc().nullsFirst(), table.id.desc().nullsFirst())`. `nullsFirst()` wajib: tanpa itu Drizzle menulis `DESC NULLS LAST`, yang tidak cocok dengan `ORDER BY ... DESC`, sehingga PostgreSQL tetap melakukan `Sort` (dicek dengan `EXPLAIN` di `test/int/shopping/shopping-items-schema.int.test.ts`).
 - Jangan menambah `.openapi()` pada `limit`: override itu menghapus `minimum`, `maximum`, dan `default` dari OpenAPI (dijaga test).
 
 ## Database
@@ -220,7 +220,7 @@ Helper di `apps/api/src/core/http/pagination.ts`. Contoh route: `listNotesRoute`
 - Tabel snake_case jamak; properti TypeScript camelCase dengan nama kolom ditulis eksplisit (`firebaseUid: text('firebase_uid')`).
 - Kolom bersama dari `schema/columns.ts`: `id()` (`uuid` default `gen_random_uuid()`), `createdAt()`, `updatedAt()` (`$onUpdate`, hanya berlaku lewat `db.update()` Drizzle), `timestamptz(nama)` untuk timestamp lain. Kolom `date` memakai `mode: 'string'`.
 - **Semua timestamp presisi milidetik:** `timestamptz(3)` dengan `mode: 'date'`, selalu lewat helper di `schema/columns.ts`, tidak pernah `timestamp(...)` langsung. `Date` di JavaScript hanya milidetik, jadi nilai di database, entity, respons API, dan cursor pagination selalu sama persis; nilai yang lebih presisi dibulatkan PostgreSQL ke milidetik. Dijaga `test/int/db/schema.int.test.ts` › semua kolom timestamp di schema public berpresisi milidetik (tabel baru otomatis ikut diperiksa). Akibatnya dua penulisan bisa mendapat timestamp yang sama: test yang membandingkan `updated_at` sebelum dan sesudah update mengisi nilai awal di masa lalu, bukan mengandalkan `toBeGreaterThan` antara dua `now()`.
-- Constraint dan index diberi nama eksplisit `<tabel>_<kolom>_<jenis>` (`users_firebase_uid_unique`, `users_email_lowercase_check`, `notes_title_length_check`, `notes_user_id_fk`, `notes_user_id_created_at_id_index`) agar test dan penanganan error bisa merujuknya. Foreign key ditulis dengan `foreignKey({ name, columns, foreignColumns })`, bukan `.references()`, karena nama bawaan Drizzle tidak mengikuti pola ini. Enum ditulis sebagai `text` + `check`. Contoh: `apps/api/src/db/schema/notes.ts`.
+- Constraint dan index diberi nama eksplisit `<tabel>_<kolom>_<jenis>` (`users_firebase_uid_unique`, `users_email_lowercase_check`, `shopping_items_name_length_check`, `shopping_items_user_id_fk`, `shopping_items_user_id_name_unique`, `shopping_items_user_id_created_at_id_index`) agar test dan penanganan error bisa merujuknya. Foreign key ditulis dengan `foreignKey({ name, columns, foreignColumns })`, bukan `.references()`, karena nama bawaan Drizzle tidak mengikuti pola ini. Enum ditulis sebagai `text` + `check`. Contoh: `apps/api/src/db/schema/shopping-items.ts`.
 - Data milik user memakai `user_id` FK ke `users.id` `ON DELETE CASCADE`. Batas panjang teks ditegakkan dengan CHECK `char_length(...)` selain skema Zod route; batas Zod sama atau lebih ketat (Zod menghitung UTF-16 code unit, `char_length` menghitung karakter), jadi input yang lolos Zod tidak pernah melanggar CHECK.
 - Migrasi: ubah skema → `pnpm --filter api db:generate --name <ringkas>` → commit file `apps/api/drizzle/NNNN_<ringkas>.sql` beserta `meta/`. Migrasi yang sudah di-commit tidak diedit. `db:generate` tanpa perubahan skema harus mencetak `No schema changes`.
 - `pnpm --filter api db:migrate` (`src/db/migrate.ts`) menerapkan migrasi ke `DATABASE_URL`; idempoten. Hanya butuh `DATABASE_URL` (`loadDatabaseUrl()`), bukan seluruh env server.
@@ -247,7 +247,7 @@ Implementasi di `apps/api/src/core/http/errors.ts` dan `error-codes.ts`. Semua e
 
 `code` stabil dan menjadi dasar teks untuk user di Flutter (D-03). Daftar `ErrorCode` diekspor ke OpenAPI sebagai enum, sehingga client Dart punya daftar yang sama. Kode baru ditambahkan ke `error-codes.ts` (beserta status HTTP-nya), lalu `pnpm contract:generate`, lalu dipetakan di `failureCodeOf` dan `failure_messages.dart` di Flutter.
 
-- Lempar `new AppError('NOT_FOUND', 'Note not found')` dari use case atau middleware; status HTTP diturunkan dari `code`. `message` bahasa Inggris untuk developer. `AppError` tidak membawa `details`.
+- Lempar `new AppError('NOT_FOUND', 'Shopping item not found')` dari use case atau middleware; status HTTP diturunkan dari `code`. `message` bahasa Inggris untuk developer. `AppError` tidak membawa `details`.
 - `details` hanya untuk `VALIDATION_ERROR` (`ValidationError`). Validasi Zod di route ditangani otomatis oleh `defaultHook`; validasi manual di luar route memakai `new ValidationError(validationDetails(issues, input))`.
 - Kunci `details`: path digabung titik (`items.0.name`), `_root` bila tanpa path (body bukan objek, `refine` di level objek). Nilai: array `{ code, message }` dengan kode issue Zod (`invalid_type`, `too_small`, `too_big`, `invalid_format`, `custom`, …), kecuali field yang tidak dikirim (`undefined` di input mentah) memakai `{ code: 'required', message: 'Required' }`. Field yang dikirim `null` tetap `invalid_type`.
 - `HTTPException` 4xx dari Hono dipetakan ke `ErrorCode` menurut status (JSON rusak → `400 BAD_REQUEST`; 4xx lain yang tidak ada di daftar → `BAD_REQUEST`). Error lain dan 5xx → `500 INTERNAL_ERROR` dengan pesan umum; error aslinya dicatat di log.
@@ -265,16 +265,16 @@ Implementasi di `apps/api/src/core/http/errors.ts` dan `error-codes.ts`. Semua e
 - Token login dibuat lewat Auth Emulator dengan `signUp()` / `updateAccount()` dari `test/helpers/emulator-token.ts` (email acak, emulator tidak dibersihkan). Token kedaluwarsa atau untuk project lain dibuat dengan `unsignedIdToken({ exp, aud, … })`. Contoh: `test/int/users/me.int.test.ts`.
 - Test HTTP memanggil `app.request()` pada `createTestApp()`, bukan server sungguhan. Route khusus test didaftarkan di app hasil `createTestApp()` di dalam file test-nya (contoh: `test/unit/core/http/errors.test.ts`).
 - Log diperiksa dengan `createLogger({ level: 'info' }, stream)` memakai `Writable` yang menampung baris JSON (contoh: `test/unit/core/logger.test.ts`).
-- Setiap use case punya unit test dengan repository palsu di memori yang meniru perilaku implementasi Drizzle (pembatasan pemilik, urutan, cursor). Repository palsu fitur ditaruh di `test/unit/features/<fitur>/fake-<nama>-repository.ts` (bukan `*.test.ts`, jadi tidak dijalankan sendiri). Contoh: `test/unit/features/notes/fake-note-repository.ts`, `test/unit/features/notes/usecases/*.test.ts`.
-- Unit test route memeriksa pemetaan DTO dan dokumen OpenAPI (operationId, security, status, nama skema); perilaku route yang butuh login diuji di integration test. Contoh: `test/unit/features/notes/http/notes.route.test.ts`, `test/int/notes/notes.int.test.ts`.
+- Setiap use case punya unit test dengan repository palsu di memori yang meniru perilaku implementasi Drizzle (pembatasan pemilik, urutan, cursor). Repository palsu fitur ditaruh di `test/unit/features/<fitur>/fake-<nama>-repository.ts` (bukan `*.test.ts`, jadi tidak dijalankan sendiri). Contoh: `test/unit/features/shopping/fake-shopping-item-repository.ts`, `test/unit/features/shopping/usecases/*.test.ts`.
+- Unit test route memeriksa pemetaan DTO dan dokumen OpenAPI (operationId, security, status, nama skema); perilaku route yang butuh login diuji di integration test. Contoh: `test/unit/features/shopping/http/shopping-items.route.test.ts`, `test/int/shopping/shopping-items.int.test.ts`.
 - Unit test yang menjalankan proses anak (`spawnSync`) memberi timeout per test lebih besar dari `timeout` proses anaknya, bukan menaikkan `testTimeout` global; start dingin `tsx` di Windows bisa lebih dari 5 detik bawaan Vitest. Contoh: `test/unit/server.test.ts`.
 - Integration test yang memeriksa keadaan server PostgreSQL (`pg_stat_activity` dan sejenisnya) membatasi ke `datname = current_database()`, karena API dev bisa berjalan bersamaan di database utama. Contoh: `test/int/jobs/boss.int.test.ts`.
 - Tidak ada retry otomatis untuk test yang gagal acak; cari dan perbaiki penyebabnya (output lengkap di `.check-logs/`).
-- Keadaan awal integration test dibuat dengan `insertUser`, `insertNote`, `insertNotes` dari `test/helpers/factories.ts`; data yang diuji lewat HTTP tetap dibuat lewat route. Integration test yang butuh `userId` login memanggil `GET /v1/me` dulu (helper `login()` di `test/int/notes/notes.int.test.ts`).
+- Keadaan awal integration test dibuat dengan `insertUser`, `insertShoppingItem`, `insertShoppingItems` dari `test/helpers/factories.ts`; data yang diuji lewat HTTP tetap dibuat lewat route. Integration test yang butuh `userId` login memanggil `GET /v1/me` dulu (helper `login()` di `test/int/shopping/shopping-items.int.test.ts`).
 
 ## Clean Architecture API
 
-Contoh lengkap: `apps/api/src/features/notes/` (fitur CONTOH yang ditiru lalu dihapus di proyek).
+Contoh lengkap: `apps/api/src/features/shopping/`.
 
 ```
 features/<fitur>/
@@ -285,12 +285,13 @@ features/<fitur>/
 ```
 
 - Arah dependency: `http` → `usecases` → `domain` ← `infrastructure`. Use case hanya mengimpor `domain`, `AppError` (`core/http/errors.ts`), port (`core/ports`), dan tipe `Page`/`CursorPosition` (`core/http/pagination.ts`); tidak pernah Hono, Drizzle, atau firebase-admin.
-- Use case adalah fungsi pabrik `xxxNote({ notes })` yang mengembalikan fungsi, dengan tipe `export type XxxNote = ReturnType<typeof xxxNote>`. Dependency (repository, port, `now`) masuk lewat objek pertama agar test bisa memberi versi palsu. Contoh: `features/notes/usecases/get-note.ts`.
+- Use case adalah fungsi pabrik `xxxShoppingItem({ shoppingItems })` yang mengembalikan fungsi, dengan tipe `export type XxxShoppingItem = ReturnType<typeof xxxShoppingItem>`. Dependency (repository, port, `now`) masuk lewat objek pertama agar test bisa memberi versi palsu. Contoh: `features/shopping/usecases/delete-shopping-item.ts`.
 - Entity domain memakai `Date` untuk timestamp. Konversi ke JSON (`toISOString()`, membuang field internal seperti `userId`) hanya di `http` lewat fungsi `toXxxDto`.
 - Repository dibatasi pemilik: setiap metode menerima `userId` dan memfilter `user_id` di query yang sama (bukan ambil dulu lalu cek), lalu mengembalikan `null`/`false` bila tidak ada atau milik user lain. Use case mengubahnya menjadi `AppError('NOT_FOUND', ...)` (D-07: `404`, bukan `403`).
 - `createApp()` di `src/app.ts` adalah composition root: buat repository dari `db`, rakit use case, lalu `registerXxxRoutes(app, { ...useCases })`. Route menerima use case lewat parameter, bukan membuatnya sendiri.
-- Route: path param `id` divalidasi `z.uuid()` (bukan UUID → `422 details.id`); body POST/PATCH memakai `request.body.required: true`; PATCH memakai skema dengan semua field opsional + `.refine()` minimal satu field (→ `details._root`); `DELETE` mengembalikan `c.body(null, 204)`. Skema request dan respons diberi nama `.openapi('Note')`, `'CreateNoteInput'`, `'UpdateNoteInput'`, `'NotePage'`.
-- Teks wajib yang tidak boleh kosong memakai `.trim()` sebelum `.min()`/`.max()` (`z.string().trim().min(1).max(TITLE_MAX)`): teks berisi spasi saja → `422` `too_small`, nilai yang disimpan sudah dirapikan, dan panjang dihitung setelah dirapikan. Contoh: `Title` di `features/notes/http/notes.route.ts`, dijaga `test/int/notes/notes.int.test.ts`.
+- Route: path param `id` divalidasi `z.uuid()` (bukan UUID → `422 details.id`); body POST/PATCH memakai `request.body.required: true`; PATCH memakai skema dengan semua field opsional + `.refine()` minimal satu field (→ `details._root`); `DELETE` mengembalikan `c.body(null, 204)`. Skema request dan respons diberi nama `.openapi('ShoppingItem')`, `'CreateShoppingItemInput'`, `'UpdateShoppingItemInput'`, `'ShoppingItemPage'`.
+- Pelanggaran keunikan dikenali repository lewat SQLSTATE `23505` dan nama constraint, lalu dilempar sebagai error domain (`ShoppingItemNameTakenError` di `domain/shopping-item.ts`); use case mengubahnya menjadi `AppError('CONFLICT', …)`. Repository tidak mengimpor `AppError`. Contoh: `mapNameTaken` di `features/shopping/infrastructure/drizzle-shopping-item-repository.ts`.
+- Teks wajib yang tidak boleh kosong memakai `.trim()` sebelum `.min()`/`.max()` (`z.string().trim().min(1).max(NAME_MAX)`): teks berisi spasi saja → `422` `too_small`, nilai yang disimpan sudah dirapikan, dan panjang dihitung setelah dirapikan. Contoh: `Name` di `features/shopping/http/shopping-items.route.ts`, dijaga `test/int/shopping/shopping-items.int.test.ts`.
 
 ### Aturan bisnis: API vs client
 
@@ -299,7 +300,7 @@ features/<fitur>/
 
 ### Organisasi dan tenancy (pola, belum ada di template)
 
-D-11: template hanya mengenal "user yang login" dengan data milik user (`notes.user_id`). Proyek yang butuh organisasi, tim, atau peran memakai pola berikut. Belum ada file contohnya; tiru fitur notes dengan `user_id` diganti `organization_id`, dan catat implementasi pertamanya di sini sebagai file contoh.
+D-11: template hanya mengenal "user yang login" dengan data milik user (`shopping_items.user_id`). Proyek yang butuh organisasi, tim, atau peran memakai pola berikut. Belum ada file contohnya; tiru fitur shopping dengan `user_id` diganti `organization_id`, dan catat implementasi pertamanya di sini sebagai file contoh.
 
 - Tabel `organizations` (`id`, `name`, timestamp) dan `memberships` (`organization_id` dan `user_id`, keduanya FK `ON DELETE CASCADE`; `role` sebagai `text` + CHECK, misalnya `owner`/`admin`/`member`; UNIQUE `(organization_id, user_id)`). Data milik organisasi memakai `organization_id` FK `ON DELETE CASCADE`, dengan index pagination `(organization_id, created_at DESC, id DESC)`.
 - Path bersarang `/v1/organizations/{organizationId}/<resource>`, sehingga tetap di bawah `authenticate`. Middleware keanggotaan di `/v1/organizations/:organizationId/*` membaca membership user login dan menaruhnya di context (`c.var.membership`); `organizationId` yang bukan UUID → `422 details.organizationId`.
@@ -317,9 +318,9 @@ D-01, D-02: route Hono adalah satu-satunya sumber kebenaran. `packages/contract/
 - `openapi.json` diformat Biome setelah export (lewat stdin, memakai `biome.json`), sehingga `pnpm lint` bersih dan hasilnya deterministik.
 - File Dart hasil generate **tidak** diformat ulang (`dart format` tidak dijalankan pada `lib/src/api/`); `contract:check` membandingkan hasil generate apa adanya. Hasilnya deterministik selama versi generator sama, karena itu `dart/pubspec.lock` di-commit.
 - Yang ditulis tangan di package: `pubspec.yaml`, `swagger_parser.yaml`, `lib/api_client.dart` (mengekspor `src/api/export.dart`), dan `test/api_client_test.dart`. Test dijalankan dengan `dart test` di `packages/contract/dart`.
-- Nama komponen OpenAPI menjadi nama kelas Dart: setiap skema request, respons, dan objek bersarang yang penting diberi `.openapi('Nama')`. Tanpa nama, swagger_parser membuat nama sendiri (objek error tanpa nama menjadi kelas `Error` yang menutupi `dart:core`). Satu tag OpenAPI menjadi satu client (`NotesClient`, `UsersClient`, `SystemClient`), dirangkum `ApiClient`.
+- Nama komponen OpenAPI menjadi nama kelas Dart: setiap skema request, respons, dan objek bersarang yang penting diberi `.openapi('Nama')`. Tanpa nama, swagger_parser membuat nama sendiri (objek error tanpa nama menjadi kelas `Error` yang menutupi `dart:core`). Satu tag OpenAPI menjadi satu client (`ShoppingClient`, `UsersClient`, `SystemClient`), dirangkum `ApiClient`.
 - `ErrorCode` menjadi enum Dart dengan nilai `$unknown` untuk kode yang belum dikenal (`unknown_enum_value: true`); Flutter memetakan `$unknown` ke teks umum. Respons error sampai di dio sebagai `DioException` dengan `response.data` berupa `Map`, dibaca dengan `ErrorBody.fromJson`.
-- Field opsional yang `null` tidak dikirim di body request (`include_if_null: true` di `swagger_parser.yaml` → `@JsonKey(includeIfNull: false)`), karena API menolak `null` pada field `optional()` (`invalid_type`). Field wajib yang nullable (`nextCursor`, `User.email`) tetap ditulis sebagai `null`. Dijaga `packages/contract/dart/test/api_client_test.dart` dan `apps/app/test/features/notes/data/note_remote_data_source_test.dart`.
+- Field opsional yang `null` tidak dikirim di body request (`include_if_null: true` di `swagger_parser.yaml` → `@JsonKey(includeIfNull: false)`), karena API menolak `null` pada field `optional()` (`invalid_type`). Field wajib yang nullable (`nextCursor`, `User.email`) tetap ditulis sebagai `null`. Dijaga `packages/contract/dart/test/api_client_test.dart` dan `apps/app/test/features/shopping/data/shopping_item_remote_data_source_test.dart`.
 - Waktu: `build_runner` pertama ~35–45 detik (kompilasi builder; juga berlaku untuk `contract:check` bila `dart/.dart_tool` belum ada, misalnya di CI). Setelah itu `contract:check` ~6 detik karena `.dart_tool` ikut disalin ke folder sementara.
 
 ## Image produksi API
@@ -388,7 +389,7 @@ features/auth/
 
 - Dio dibuat `createDio()` (`core/network/create_dio.dart`) dengan `baseUrl` dari config dan `AuthInterceptor`; `ApiClient` dari `api_client` memakai Dio itu.
 - `AuthInterceptor` menambahkan `Authorization: Bearer <ID token>` dari `TokenProvider` (`FirebaseTokenProvider` → `currentUser.getIdToken()`) bila user login. Respons `401` → token di-refresh sekali (`forceRefresh`) dan request diulang sekali (penanda `extra['authRetried']`); `401` kedua, gagal refresh, atau user tidak login → error diteruskan.
-- Repository memanggil `api_client` lewat `apiCall(() => client.notes.getNote(id: id), map: noteFromDto)` (`core/network/api_call.dart`): `DioException` → `Err(failureFromDioException(e))`. Exception lain (bug mapper) tidak ditangkap.
+- Repository memanggil `api_client` lewat `apiCall(() => _remote.create(name: name), map: shoppingItemFromDto)` (`core/network/api_call.dart`): `DioException` → `Err(failureFromDioException(e))`. Exception lain (bug mapper) tidak ditangkap.
 - `failureFromDioException` (`core/network/error_mapper.dart`) membaca body `ErrorBody` dan memetakan `ErrorCode` lewat `failureCodeOf` (switch tanpa `default`: kode baru di kontrak membuat `flutter analyze` gagal sampai dipetakan).
 
 ### Teks UI dan l10n
@@ -412,44 +413,46 @@ features/auth/
 - Form login dan daftar: `AuthForm` + `AuthFormState` (sealed `Idle`/`Submitting`/`Failed(failure)`/`Succeeded`). Validasi lokal hanya "wajib diisi"; aturan lain dari Firebase. Perpindahan halaman setelah berhasil dilakukan router, bukan halaman.
 - Cubit yang menunggu `Future` memeriksa `isClosed` sebelum `emit` dan mengabaikan submit kedua saat `Submitting` (`features/auth/presentation/cubit/login_cubit.dart`).
 
-### Fitur berbasis API (contoh: notes)
+### Fitur berbasis API (contoh: shopping)
 
-Contoh lengkap: `apps/app/lib/features/notes/` (fitur CONTOH, pasangan `apps/api/src/features/notes/`).
+Contoh lengkap: `apps/app/lib/features/shopping/` (pasangan `apps/api/src/features/shopping/`).
 
 ```
-features/notes/
-├── notes_dependencies.dart           # registerNotesDependencies(GetIt)
+features/shopping/
+├── shopping_dependencies.dart                 # registerShoppingDependencies(GetIt)
 ├── domain/
-│   ├── entities/                     # note.dart, note_page.dart
-│   ├── repositories/                 # note_repository.dart
-│   └── usecases/                     # list_notes, get_note, create_note, update_note, delete_note
+│   ├── entities/                              # shopping_item.dart, shopping_item_page.dart, shopping_item_status.dart
+│   ├── repositories/                          # shopping_item_repository.dart
+│   └── usecases/                              # list_, create_, update_, delete_shopping_item(s), clear_done_shopping_items
 ├── data/
-│   ├── note_remote_data_source.dart  # membungkus NotesClient, mengembalikan DTO, melempar DioException
-│   ├── note_mapper.dart              # DTO → entity (noteFromDto, notePageFromDto)
-│   └── api_note_repository.dart      # apiCall(() => _remote.xxx(), map: ...) → Result
+│   ├── shopping_item_remote_data_source.dart  # membungkus ShoppingClient, mengembalikan DTO, melempar DioException
+│   ├── shopping_item_mapper.dart              # DTO → entity (shoppingItemFromDto, shoppingItemPageFromDto)
+│   └── api_shopping_item_repository.dart      # apiCall(() => _remote.xxx(), map: ...) → Result
 └── presentation/
-    ├── cubit/                        # notes_list_cubit (daftar + pagination), note_form_cubit (buat/ubah/hapus)
-    ├── pages/                        # notes_page.dart (/notes), note_form_page.dart (/notes/new, /notes/:id)
-    └── widgets/                      # note_tile, note_form, load_more_footer, failure_view
+    ├── cubit/                                 # shopping_list_cubit (daftar + filter + pagination), shopping_item_form_cubit (buat/ubah/hapus)
+    ├── pages/                                 # shopping_page.dart (/shopping), shopping_item_form_page.dart (/shopping/new, /shopping/:id)
+    └── widgets/                               # shopping_item_tile, shopping_item_form, load_more_footer, failure_view
 ```
 
-- Data source satu kelas per resource di atas client hasil generate (`c<ApiClient>().notes`): menerima parameter Dart biasa, membuat DTO input (`CreateNoteInput`, `UpdateNoteInput`), dan mengembalikan DTO respons. Tidak menangkap exception.
-- Repository impl memanggil data source lewat `apiCall`/`apiCallRaw`, tanpa pemetaan error per fitur: `NOT_FOUND` → `FailureCode.notFound`, `VALIDATION_ERROR` → `FailureCode.validation` dengan `fieldErrors` dari `details` (kunci `title`, `_root`, `cursor`), semuanya lewat `failureFromDioException`.
-- File di `data/` mengimpor `api_client` dengan prefix (`import 'package:api_client/api_client.dart' as dto;`) karena nama DTO sama dengan entity (`dto.Note` vs `Note`). `domain/` tidak pernah mengimpor `api_client`.
-- Entity memakai `DateTime` UTC dari DTO apa adanya; konversi ke waktu lokal hanya di presentation. Daftar memakai entity halaman sendiri (`NotePage`: `items`, `nextCursor`, `hasMore`).
-- Parameter opsional `null` berarti "tidak dikirim": `limit` `null` = bawaan API (20), `body` `null` saat membuat = tidak dikirim (API menyimpan `''`), field `null` saat mengubah = tidak diubah.
-- Use case hanya menormalisasi input (`title.trim()`) lalu meneruskan ke repository; wajib diisi, batas panjang, dan minimal satu field ditegakkan API (lihat Aturan bisnis: API vs client).
+- Data source satu kelas per resource di atas client hasil generate (`c<ApiClient>().shopping`): menerima parameter Dart biasa, membuat DTO input (`CreateShoppingItemInput`, `UpdateShoppingItemInput`), dan mengembalikan DTO respons. Tidak menangkap exception.
+- Repository impl memanggil data source lewat `apiCall`/`apiCallRaw`, tanpa pemetaan error per fitur: `NOT_FOUND` → `FailureCode.notFound`, `VALIDATION_ERROR` → `FailureCode.validation` dengan `fieldErrors` dari `details` (kunci `name`, `quantity`, `_root`, `cursor`), semuanya lewat `failureFromDioException`.
+- File di `data/` mengimpor `api_client` dengan prefix (`import 'package:api_client/api_client.dart' as dto;`) karena nama DTO sama dengan entity (`dto.ShoppingItem` vs `ShoppingItem`). `domain/` tidak pernah mengimpor `api_client`.
+- Entity memakai `DateTime` UTC dari DTO apa adanya; konversi ke waktu lokal hanya di presentation. Daftar memakai entity halaman sendiri (`ShoppingItemPage`: `items`, `nextCursor`, `hasMore`).
+- Parameter opsional `null` berarti "tidak dikirim": `limit` `null` = bawaan API (20), `quantity` `null` saat membuat = tidak dikirim (API menyimpan 1), field `null` saat mengubah = tidak diubah.
+- Use case hanya menormalisasi input (`name.trim()`) lalu meneruskan ke repository; wajib diisi, batas panjang, dan minimal satu field ditegakkan API (lihat Aturan bisnis: API vs client).
 
-Presentation (`features/notes/presentation/`):
+Presentation (`features/shopping/presentation/`):
 
-- **Daftar dengan pagination** (`NotesListCubit`): state sealed `Loading` / `LoadFailed(failure)` / `Loaded(items, nextCursor, loadingMore, loadMoreFailure)`. `load()` memuat halaman pertama (juga untuk "Coba lagi"); `loadMore()` memakai `nextCursor` dan diabaikan bila sudah halaman terakhir atau sedang memuat. Gagal di halaman berikutnya tidak menghapus daftar: `loadMoreFailure` tampil di baris terakhir dengan tombol "Coba lagi", tanpa coba ulang otomatis. Setelah `await`, Cubit membaca `state` lagi karena daftar bisa berubah selama menunggu.
+- **Daftar dengan pagination** (`ShoppingListCubit`): state sealed `Loading` / `LoadFailed(failure)` / `Loaded(items, nextCursor, loadingMore, loadMoreFailure, …)`. `load()` memuat halaman pertama (juga untuk "Coba lagi"); `loadMore()` memakai `nextCursor` dan diabaikan bila sudah halaman terakhir atau sedang memuat. Gagal di halaman berikutnya tidak menghapus daftar: `loadMoreFailure` tampil di baris terakhir dengan tombol "Coba lagi", tanpa coba ulang otomatis. Setelah `await`, Cubit membaca `state` lagi karena daftar bisa berubah selama menunggu.
+- **Filter di daftar berpagination** (`ShoppingListCubit.setFilter`): filter disimpan di state dan dibawa setiap state (`Loading(filter)`, `LoadFailed(filter, …)`, `Loaded(filter, …)`), agar pilihan tetap tampil saat memuat atau gagal. Mengganti filter memuat ulang halaman pertama; hasil permintaan lama dibuang lewat penghitung generasi (`_generation`) yang dinaikkan setiap muat ulang. Barang yang tidak lagi cocok dengan filter setelah diubah dibuang dari daftar.
+- **Aksi di daftar** (centang, hapus massal): diterapkan ke daftar setelah API menjawab, tanpa memuat ulang dan tanpa optimistis; barang yang sedang disimpan dinonaktifkan (`updatingIds`). Kegagalan aksi tidak menghapus daftar: `Loaded.actionFailure` (dikosongkan setiap aksi baru) tampil sebagai SnackBar.
 - **Muat saat digulir:** baris terakhir `ListView.builder` (`LoadMoreFooter`) memanggil `loadMore()` setelah frame pertama ia dibangun. `ListView.builder` baru membangunnya saat digulir mendekati bawah, jadi tidak perlu `ScrollController`, dan halaman pertama yang tidak memenuhi layar langsung memuat halaman berikutnya. Jangan memanggil Cubit langsung di `build`.
 - **Gagal memuat halaman** (jaringan, `NOT_FOUND`): `FailureView` menampilkan `failureMessage(code)` dan tombol "Coba lagi".
-- **Form** (`NoteFormCubit`): state sealed `Loading` / `LoadFailed` / `Editing(note?, status, failure)` / `Saved(note)` / `Deleted(id)`; `note` `null` = membuat baru. Error validasi API (`failure.fieldErrors['title']`) tampil sebagai `errorText` di field-nya lewat `fieldIssueMessage`; kegagalan yang tidak punya field (jaringan, `NOT_FOUND`, `_root`) tampil di atas tombol simpan. Validasi lokal hanya "wajib diisi" dan `maxLength` sama dengan API. Hapus selalu lewat dialog konfirmasi.
-- **Navigasi form ↔ daftar:** daftar membuka form dengan `context.push<NoteFormState>(AppRoutes.note(id), extra: note)`; form menutup dirinya dengan `context.pop(NoteFormSaved/NoteFormDeleted)`, lalu daftar menerapkan hasilnya (`noteSaved`, `noteDeleted`) tanpa memuat ulang dari API. Rute ubah membaca note dari `extra`; bila kosong (URL dibuka langsung atau dimuat ulang di web), router memanggil `cubit.load(id)` sehingga note diambil lewat `GetNote`.
-- **Kembali ke daftar tanpa hasil → muat ulang halaman pertama.** Ada dua jalur, keduanya di `NotesPage` (`features/notes/presentation/pages/notes_page.dart`): (1) `push` dari daftar selesai tanpa state (tombol kembali, tombol kembali browser) → `cubit.load()`; (2) form dibuka lewat URL (`/notes/<id>`, `/notes/new`) sehingga daftar di bawahnya tidak memanggil `push` dan hasil `context.pop(state)` tidak sampai ke mana pun. Untuk jalur kedua, halaman daftar memantau `ModalRoute.isCurrentOf(context)` di `didChangeDependencies`: saat rutenya kembali paling atas dan form tidak dibuka lewat `_openForm`, daftar memanggil `cubit.load()`. Flag `_openedHere` mencegah muat ganda saat form dibuka dari daftar (jalur pertama sudah menanganinya). Dijaga `notes_flow_test.dart` › kembali dari form tanpa hasil, dan › dibuka lewat URL › `/notes/<id>`, simpan, kembali. Fitur lain dengan pola daftar ↔ form memakai pola yang sama.
+- **Form** (`ShoppingItemFormCubit`): state sealed `Editing(item?, status, failure)` / `Saved(item)` / `Deleted(id)`; `item` `null` = membuat baru. Fitur yang punya `GET` per item menambah `Loading` / `LoadFailed` untuk form yang dibuka lewat URL. Error validasi API (`failure.fieldErrors['name']`) tampil sebagai `errorText` di field-nya lewat `fieldIssueMessage`; kegagalan yang tidak punya field (jaringan, `NOT_FOUND`, `_root`) tampil di atas tombol simpan. Kegagalan yang punya teks khusus di field (`CONFLICT` → "Barang ini sudah ada di daftar." di field nama, `shoppingItemNameConflictMessage` di `widgets/shopping_item_form.dart`) diturunkan dari `failure.code` di widget form, bukan dari pesan server (D-03). Validasi lokal hanya "wajib diisi" dan `maxLength` sama dengan API. Hapus selalu lewat dialog konfirmasi.
+- **Navigasi form ↔ daftar:** daftar membuka form dengan `context.push<ShoppingItemFormState>(AppRoutes.shoppingItem(id), extra: item)`; form menutup dirinya dengan `context.pop(ShoppingItemFormSaved/ShoppingItemFormDeleted)`, lalu daftar menerapkan hasilnya (`itemSaved`, `itemDeleted`) tanpa memuat ulang dari API. Rute ubah membaca item dari `extra`; bila kosong (URL dibuka langsung atau dimuat ulang di web), router mengarahkan kembali ke daftar karena API tidak punya `GET /v1/shopping-items/{id}`. Fitur yang punya `GET` per item memanggil `cubit.load(id)` di rute itu.
+- **Kembali ke daftar tanpa hasil → muat ulang halaman pertama.** Ada dua jalur, keduanya di `ShoppingPage` (`features/shopping/presentation/pages/shopping_page.dart`): (1) `push` dari daftar selesai tanpa state (tombol kembali, tombol kembali browser) → `cubit.load()`; (2) form dibuka lewat URL (`/shopping/new`) sehingga daftar di bawahnya tidak memanggil `push` dan hasil `context.pop(state)` tidak sampai ke mana pun. Untuk jalur kedua, halaman daftar memantau `ModalRoute.isCurrentOf(context)` di `didChangeDependencies`: saat rutenya kembali paling atas dan form tidak dibuka lewat `_openForm`, daftar memanggil `cubit.load()`. Flag `_openedHere` mencegah muat ganda saat form dibuka dari daftar (jalur pertama sudah menanganinya). Dijaga `shopping_flow_test.dart` › kembali dari form tanpa hasil, dan › dibuka lewat URL › `/shopping/new`, simpan. Fitur lain dengan pola daftar ↔ form memakai pola yang sama.
 - **Rute anak:** halaman form adalah rute anak (`new`, `:id`) dari rute daftar di dalam `ShellRoute` terlindungi, sehingga membuka URL form langsung tetap menaruh daftar di bawahnya. `new` didaftarkan sebelum `:id`. `GoRouter.optionURLReflectsImperativeAPIs = true` (di `createRouter`) agar `push` ikut mengubah URL di web.
-- **Waktu:** `updatedAt.toLocal()` diformat dengan `MaterialLocalizations.formatMediumDate` (locale `id`), tanpa package `intl`.
+- **Waktu** (belum dipakai fitur shopping): `updatedAt.toLocal()` diformat dengan `MaterialLocalizations.formatMediumDate` (locale `id`), tanpa package `intl`.
 
 ### Test Flutter
 
@@ -458,18 +461,7 @@ Presentation (`features/notes/presentation/`):
 - Use case: satu file test per use case, repository di-mock (`test/features/auth/domain/usecases/sign_in_test.dart`). Cubit: `blocTest` (`test/features/auth/presentation/cubit/login_cubit_test.dart`). Halaman: widget test dengan Cubit mock + `whenListen` (`test/features/auth/presentation/pages/login_page_test.dart`).
 - Router: widget test dengan wiring fitur asli (`registerAuthDependencies` pada `GetIt.asNewInstance()`) dan repository diganti fake dalam memori (`test/features/auth/fake_auth_repository.dart`), lalu `App(router: createRouter(container: c))` (`test/core/router/app_router_test.dart`).
 - HTTP diuji lewat Dio sungguhan dengan `FakeHttpAdapter` (mencatat request, menjawab per request), bukan mock Dio. Contoh: `test/core/network/auth_interceptor_test.dart`, `test/core/network/error_mapper_test.dart`.
-- Fitur berbasis API: use case dengan repository di-mock (`test/features/notes/domain/usecases/*_test.dart`); repository impl dengan data source di-mock yang melempar `DioException.badResponse` berisi body error standar (`test/features/notes/data/api_note_repository_test.dart`); data source dengan `NotesClient` asli + `FakeHttpAdapter` untuk memeriksa method, path, query, dan body request (`test/features/notes/data/note_remote_data_source_test.dart`). Fixture entity dan JSON (`testNote`, `noteJson`, `noteNo(i)`) di `test/features/notes/mocks.dart`.
-- Presentation fitur berbasis API: Cubit dengan use case di-mock (`test/features/notes/presentation/cubit/*_test.dart`); halaman dengan Cubit mock (`pages/*_test.dart`). Halaman yang menutup dirinya dengan `context.pop(hasil)` dipasang di atas `GoRouter` kecil di dalam test agar hasilnya bisa diperiksa (`note_form_page_test.dart`). Error di field diperiksa lewat `TextField.decoration.errorText` field itu, bukan sekadar teks ada di layar. Halaman dengan indikator berputar tidak memakai `pumpAndSettle` (tidak pernah selesai).
-- Alur fitur lengkap lewat router, Cubit, dan use case asli dengan repository palsu yang meniru API (`test/features/notes/fake_note_repository.dart`, `test/features/notes/presentation/notes_flow_test.dart`). Test router yang membuka beranda juga mendaftarkan fitur notes dengan repository palsu itu.
+- Fitur berbasis API: use case dengan repository di-mock (`test/features/shopping/domain/usecases/*_test.dart`); repository impl dengan data source di-mock yang melempar `DioException.badResponse` berisi body error standar (`test/features/shopping/data/api_shopping_item_repository_test.dart`); data source dengan `ShoppingClient` asli + `FakeHttpAdapter` untuk memeriksa method, path, query, dan body request (`test/features/shopping/data/shopping_item_remote_data_source_test.dart`). Fixture entity dan JSON (`testShoppingItem`, `shoppingItemJson`, `shoppingItemNo(i)`) di `test/features/shopping/mocks.dart`.
+- Presentation fitur berbasis API: Cubit dengan use case di-mock (`test/features/shopping/presentation/cubit/*_test.dart`); halaman dengan Cubit mock (`pages/*_test.dart`). Halaman yang menutup dirinya dengan `context.pop(hasil)` dipasang di atas `GoRouter` kecil di dalam test agar hasilnya bisa diperiksa (`shopping_item_form_page_test.dart`). Error di field diperiksa lewat `TextField.decoration.errorText` field itu, bukan sekadar teks ada di layar. Halaman dengan indikator berputar tidak memakai `pumpAndSettle` (tidak pernah selesai).
+- Alur fitur lengkap lewat router, Cubit, dan use case asli dengan repository palsu yang meniru API (`test/features/shopping/fake_shopping_item_repository.dart`, `test/features/shopping/presentation/shopping_flow_test.dart`). Test router yang membuka beranda juga mendaftarkan fitur shopping dengan repository palsu itu.
 - Test `config/dev.json` membaca file aslinya, jadi kunci yang hilang terdeteksi (`test/core/config/app_config_test.dart`).
-
-## Menghapus fitur contoh notes
-
-Fitur `notes` ada untuk ditiru (NFR-06). Hapus setelah fitur pertama proyek berdiri dan sudah menggantikannya sebagai contoh, dalam satu task tersendiri:
-
-1. **API:** hapus `apps/api/src/features/notes/`, `src/db/schema/notes.ts` beserta ekspornya di `schema/index.ts`, dan wiring notes di `src/app.ts`. Buat migrasi baru dengan `pnpm --filter api db:generate --name drop_notes` (migrasi lama tidak diedit atau dihapus).
-2. **Test API:** hapus `test/unit/features/notes/` dan `test/int/notes/`, `insertNote`/`insertNotes` di `test/helpers/factories.ts`, dan `notes.created_at` di `test/int/db/schema.int.test.ts`. Data contoh `notes/...` di test port (`test/unit/core/ports/`, `test/int/ports/`) hanya string, boleh dibiarkan.
-3. **Kontrak:** `pnpm contract:generate`, lalu sesuaikan `packages/contract/dart/test/api_client_test.dart`.
-4. **Flutter:** hapus `lib/features/notes/` dan `test/features/notes/`, `registerNotesDependencies` di `core/di/injection.dart`, rute notes di `core/router/app_router.dart` (arahkan `AppRoutes.home` ke beranda fitur proyek), dan bagian notes di `test/core/di/injection_test.dart`, `test/core/router/app_router_test.dart`, `test/core/network/auth_interceptor_test.dart`, `test/core/network/error_mapper_test.dart`.
-5. **Dokumen:** ganti rujukan file contoh notes di dokumen ini dengan file fitur proyek yang setara.
-6. `git grep -i note` untuk sisa rujukan, lalu `pnpm check` hijau.

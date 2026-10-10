@@ -9,13 +9,10 @@ import 'package:app/features/auth/auth_dependencies.dart';
 import 'package:app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:app/features/auth/presentation/pages/login_page.dart';
 import 'package:app/features/auth/presentation/pages/register_page.dart';
-import 'package:app/features/notes/domain/repositories/note_repository.dart';
-import 'package:app/features/notes/notes_dependencies.dart';
 import 'package:app/features/shopping/domain/repositories/shopping_item_repository.dart';
 import 'package:app/features/shopping/shopping_dependencies.dart';
 
 import '../../features/auth/fake_auth_repository.dart';
-import '../../features/notes/fake_note_repository.dart';
 import '../../features/shopping/fake_shopping_item_repository.dart';
 
 void main() {
@@ -24,13 +21,11 @@ void main() {
 
   late GetIt container;
 
-  /// Wiring fitur auth, notes, dan shopping yang asli, dengan [FakeAuthRepository]
-  /// menggantikan Firebase serta [FakeNoteRepository] dan [FakeShoppingItemRepository]
-  /// menggantikan API.
+  /// Wiring fitur auth dan shopping yang asli, dengan [FakeAuthRepository]
+  /// menggantikan Firebase dan [FakeShoppingItemRepository] menggantikan API.
   void setUpAuth({bool signedIn = false}) {
     container = GetIt.asNewInstance();
     registerAuthDependencies(container);
-    registerNotesDependencies(container);
     registerShoppingDependencies(container);
     container
       ..unregister<AuthRepository>()
@@ -40,8 +35,6 @@ void main() {
           signedIn: signedIn ? FakeAuthRepository.userFor(email) : null,
         ),
       )
-      ..unregister<NoteRepository>()
-      ..registerSingleton<NoteRepository>(FakeNoteRepository())
       ..unregister<ShoppingItemRepository>()
       ..registerSingleton<ShoppingItemRepository>(FakeShoppingItemRepository());
     addTearDown(container.reset);
@@ -82,7 +75,7 @@ void main() {
     for (final location in [
       AppRoutes.home,
       AppRoutes.shopping,
-      AppRoutes.notes,
+      AppRoutes.shoppingNew,
     ]) {
       testWidgets('membuka $location (terlindungi) → diarahkan ke login', (
         tester,

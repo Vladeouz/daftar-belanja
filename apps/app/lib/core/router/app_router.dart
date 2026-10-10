@@ -10,11 +10,6 @@ import 'package:app/features/auth/presentation/cubit/login_cubit.dart';
 import 'package:app/features/auth/presentation/cubit/register_cubit.dart';
 import 'package:app/features/auth/presentation/pages/login_page.dart';
 import 'package:app/features/auth/presentation/pages/register_page.dart';
-import 'package:app/features/notes/domain/entities/note.dart';
-import 'package:app/features/notes/presentation/cubit/note_form_cubit.dart';
-import 'package:app/features/notes/presentation/cubit/notes_list_cubit.dart';
-import 'package:app/features/notes/presentation/pages/note_form_page.dart';
-import 'package:app/features/notes/presentation/pages/notes_page.dart';
 import 'package:app/features/shopping/domain/entities/shopping_item.dart';
 import 'package:app/features/shopping/presentation/cubit/shopping_item_form_cubit.dart';
 import 'package:app/features/shopping/presentation/cubit/shopping_list_cubit.dart';
@@ -26,9 +21,6 @@ abstract final class AppRoutes {
   static const home = '/';
   static const login = '/login';
   static const register = '/register';
-  static const notes = '/notes';
-  static const noteNew = '/notes/new';
-  static String note(String id) => '/notes/$id';
   static const shopping = '/shopping';
   static const shoppingNew = '/shopping/new';
   static String shoppingItem(String id) => '/shopping/$id';
@@ -51,7 +43,7 @@ GoRouter createRouter({
   final c = container ?? getIt;
   final session = c<AuthSessionCubit>();
   // `context.push` ikut mengubah URL (web): tombol kembali browser menutup halaman yang
-  // di-push, dan muat ulang membuka halaman yang sama (misalnya `/notes/<id>`).
+  // di-push, dan muat ulang membuka halaman yang sama (misalnya `/shopping/new`).
   GoRouter.optionURLReflectsImperativeAPIs = true;
 
   return GoRouter(
@@ -104,43 +96,6 @@ GoRouter createRouter({
                         ..edit(state.extra! as ShoppingItem),
                   child: const ShoppingItemFormPage(),
                 ),
-              ),
-            ],
-          ),
-          GoRoute(
-            path: AppRoutes.notes,
-            builder: (context, state) => BlocProvider(
-              create: (_) => c<NotesListCubit>()..load(),
-              child: const NotesPage(),
-            ),
-            routes: [
-              GoRoute(
-                path: 'new',
-                builder: (context, state) => BlocProvider(
-                  create: (_) => c<NoteFormCubit>(),
-                  child: const NoteFormPage(),
-                ),
-              ),
-              GoRoute(
-                path: ':id',
-                builder: (context, state) {
-                  final id = state.pathParameters['id']!;
-                  // `extra` berisi note dari daftar; kosong bila dibuka lewat URL
-                  // (misalnya muat ulang di web), maka note dimuat dari API.
-                  final note = state.extra;
-                  return BlocProvider(
-                    create: (_) {
-                      final cubit = c<NoteFormCubit>();
-                      if (note is Note) {
-                        cubit.edit(note);
-                      } else {
-                        cubit.load(id);
-                      }
-                      return cubit;
-                    },
-                    child: NoteFormPage(noteId: id),
-                  );
-                },
               ),
             ],
           ),

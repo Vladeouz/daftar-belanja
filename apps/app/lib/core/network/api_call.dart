@@ -8,8 +8,8 @@ import 'package:app/core/network/error_mapper.dart';
 /// Dipakai implementasi repository di `features/<fitur>/data/`:
 ///
 /// ```dart
-/// Future<Result<Note>> get(String id) =>
-///     apiCall(() => client.notes.getNote(id: id), map: noteFromDto);
+/// Future<Result<ShoppingItem>> create({required String name}) =>
+///     apiCall(() => _remote.create(name: name), map: shoppingItemFromDto);
 /// ```
 ///
 /// [DioException] dipetakan lewat [failureFromDioException]; exception lain (bug mapper,

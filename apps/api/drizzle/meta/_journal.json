@@ -29,6 +29,13 @@
       "when": 1791607535674,
       "tag": "0003_shopping_items",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791610924719,
+      "tag": "0004_drop_notes",
+      "breakpoints": true
     }
   ]
 }

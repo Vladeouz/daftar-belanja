@@ -76,7 +76,11 @@ describe('migrasi', () => {
     );
 
     expect(rows.map((r) => r.column)).toEqual(
-      expect.arrayContaining(['notes.created_at', 'users.last_seen_at', 'users.updated_at']),
+      expect.arrayContaining([
+        'shopping_items.created_at',
+        'users.last_seen_at',
+        'users.updated_at',
+      ]),
     );
     for (const row of rows) {
       expect(row, row.column).toMatchObject({

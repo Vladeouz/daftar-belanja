@@ -64,7 +64,7 @@ export type PaginationQuery = z.infer<typeof PaginationQuerySchema>;
 export type Page<T> = { items: T[]; nextCursor: string | null };
 
 // Skema respons `{ items, nextCursor }`. `name` menjadi nama komponen OpenAPI dan kelas Dart,
-// misalnya `pageSchema(NoteSchema, 'NotePage')`.
+// misalnya `pageSchema(ShoppingItemSchema, 'ShoppingItemPage')`.
 export function pageSchema<T extends z.ZodType>(item: T, name: string) {
   return z
     .object({

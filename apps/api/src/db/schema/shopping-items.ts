@@ -36,7 +36,7 @@ export const shoppingItems = pgTable(
     // Nama unik per user tanpa membedakan huruf besar dan kecil. Pelanggarannya dikenali lewat
     // nama constraint ini dan dijawab `409 CONFLICT` (D-01).
     uniqueIndex('shopping_items_user_id_name_unique').on(table.userId, sql`lower(${table.name})`),
-    // Urutan pagination cursor: `created_at DESC, id DESC` per user (lihat tabel `notes`).
+    // Urutan pagination cursor: `created_at DESC, id DESC` per user (lihat "Pagination" di `docs/conventions.md`).
     index('shopping_items_user_id_created_at_id_index').on(
       table.userId,
       table.createdAt.desc().nullsFirst(),

@@ -14,7 +14,7 @@ Future<DioException> dioErrorFor(
   final dio = Dio(BaseOptions(baseUrl: 'http://api.test'))
     ..httpClientAdapter = FakeHttpAdapter(respond);
   try {
-    await dio.get<Object?>('/v1/notes');
+    await dio.get<Object?>('/v1/shopping-items');
   } on DioException catch (e) {
     return e;
   }

@@ -9,13 +9,6 @@ import { createErrorHandler, notFoundHandler, validationHook } from './core/http
 import { requestLogger } from './core/logger.js';
 import type { Ports } from './core/ports/create-ports.js';
 import type { Database } from './db/client.js';
-import { registerNoteRoutes } from './features/notes/http/notes.route.js';
-import { createDrizzleNoteRepository } from './features/notes/infrastructure/drizzle-note-repository.js';
-import { createNote } from './features/notes/usecases/create-note.js';
-import { deleteNote } from './features/notes/usecases/delete-note.js';
-import { getNote } from './features/notes/usecases/get-note.js';
-import { listNotes } from './features/notes/usecases/list-notes.js';
-import { updateNote } from './features/notes/usecases/update-note.js';
 import { registerShoppingItemRoutes } from './features/shopping/http/shopping-items.route.js';
 import { createDrizzleShoppingItemRepository } from './features/shopping/infrastructure/drizzle-shopping-item-repository.js';
 import { clearDoneShoppingItems } from './features/shopping/usecases/clear-done-shopping-items.js';
@@ -60,16 +53,7 @@ export function createApp({
   registerBearerAuth(app);
   registerUserRoutes(app);
 
-  // CONTOH fitur: repository → use case → route. Fitur baru dirakit dengan pola yang sama.
-  const notes = createDrizzleNoteRepository(db);
-  registerNoteRoutes(app, {
-    listNotes: listNotes({ notes }),
-    createNote: createNote({ notes }),
-    getNote: getNote({ notes }),
-    updateNote: updateNote({ notes }),
-    deleteNote: deleteNote({ notes }),
-  });
-
+  // Fitur: repository → use case → route. Fitur baru dirakit dengan pola yang sama.
   const shoppingItems = createDrizzleShoppingItemRepository(db);
   registerShoppingItemRoutes(app, {
     listShoppingItems: listShoppingItems({ shoppingItems }),

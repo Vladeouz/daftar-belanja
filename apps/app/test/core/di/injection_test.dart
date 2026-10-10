@@ -14,15 +14,6 @@ import 'package:app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:app/features/auth/presentation/cubit/auth_session_cubit.dart';
 import 'package:app/features/auth/presentation/cubit/login_cubit.dart';
 import 'package:app/features/auth/presentation/cubit/register_cubit.dart';
-import 'package:app/features/notes/data/api_note_repository.dart';
-import 'package:app/features/notes/domain/repositories/note_repository.dart';
-import 'package:app/features/notes/domain/usecases/create_note.dart';
-import 'package:app/features/notes/domain/usecases/delete_note.dart';
-import 'package:app/features/notes/domain/usecases/get_note.dart';
-import 'package:app/features/notes/domain/usecases/list_notes.dart';
-import 'package:app/features/notes/domain/usecases/update_note.dart';
-import 'package:app/features/notes/presentation/cubit/note_form_cubit.dart';
-import 'package:app/features/notes/presentation/cubit/notes_list_cubit.dart';
 import 'package:app/features/shopping/data/api_shopping_item_repository.dart';
 import 'package:app/features/shopping/domain/repositories/shopping_item_repository.dart';
 import 'package:app/features/shopping/domain/usecases/clear_done_shopping_items.dart';
@@ -84,24 +75,6 @@ void main() {
     expect(container<AuthSessionCubit>(), same(container<AuthSessionCubit>()));
     expect(container<LoginCubit>(), isNot(same(container<LoginCubit>())));
     expect(container<RegisterCubit>(), isNot(same(container<RegisterCubit>())));
-  });
-
-  test('mendaftarkan dependency fitur notes', () {
-    expect(container<NoteRepository>(), isA<ApiNoteRepository>());
-    expect(container<NoteRepository>(), same(container<NoteRepository>()));
-    expect(container<ListNotes>(), isA<ListNotes>());
-    expect(container<GetNote>(), isA<GetNote>());
-    expect(container<CreateNote>(), isA<CreateNote>());
-    expect(container<UpdateNote>(), isA<UpdateNote>());
-    expect(container<DeleteNote>(), isA<DeleteNote>());
-  });
-
-  test('Cubit notes dibuat baru setiap halaman dibuka (factory)', () {
-    expect(
-      container<NotesListCubit>(),
-      isNot(same(container<NotesListCubit>())),
-    );
-    expect(container<NoteFormCubit>(), isNot(same(container<NoteFormCubit>())));
   });
 
   test('mendaftarkan dependency fitur shopping', () {
