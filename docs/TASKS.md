@@ -4,7 +4,7 @@ Setiap task dikerjakan dalam satu sesi. Kriteria bertanda **(manual)** diverifik
 
 ## Fase 1 — API
 
-- [ ] T-001 Fitur shopping (API): tabel, CRUD, filter status, nama unik
+- [x] T-001 Fitur shopping (API): tabel, CRUD, filter status, nama unik
   - layer: api · depends_on: - · refs: FR-01, FR-02, FR-03, NFR-01, NFR-02, D-01
   - files: ikuti struktur fitur di `docs/conventions.md`
   - done when: setiap kriteria FR-01 sampai FR-03 terbukti oleh test; endpoint baru tercakup test keamanan route yang sudah ada; `pnpm check` hijau
