@@ -15,7 +15,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-template}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-template}
-      POSTGRES_DB: ${POSTGRES_DB:-template}
+      POSTGRES_DB: ${POSTGRES_DB:-daftar_belanja}
     ports:
       - "5432:5432"
     volumes:
@@ -30,7 +30,7 @@ services:
     <<: *firebase-emulator
     environment:
       FIREBASE_EMULATORS: auth
-      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-demo-template}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-demo-daftar-belanja}
     ports:
       - "9099:9099"
     healthcheck:
@@ -44,7 +44,7 @@ services:
     <<: *firebase-emulator
     environment:
       FIREBASE_EMULATORS: storage
-      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-demo-template}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-demo-daftar-belanja}
     ports:
       - "9199:9199"
     healthcheck:

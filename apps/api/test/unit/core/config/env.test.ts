@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { EnvError, loadDatabaseUrl, loadEnv } from '../../../../src/core/config/env.js';
 
-const DATABASE_URL = 'postgres://template:template@localhost:5432/template';
+const DATABASE_URL = 'postgres://template:template@localhost:5432/daftar_belanja';
 const base = {
   CORS_ORIGINS: 'http://localhost:8081',
   DATABASE_URL,
-  FIREBASE_PROJECT_ID: 'demo-template',
+  FIREBASE_PROJECT_ID: 'demo-daftar-belanja',
 };
 
 describe('loadEnv', () => {
@@ -16,7 +16,7 @@ describe('loadEnv', () => {
       LOG_LEVEL: 'info',
       CORS_ORIGINS: ['http://localhost:8081'],
       DATABASE_URL,
-      FIREBASE_PROJECT_ID: 'demo-template',
+      FIREBASE_PROJECT_ID: 'demo-daftar-belanja',
       RUN_WORKER: false,
       PUSH_ADAPTER: 'none',
       STORAGE_ADAPTER: 'none',
@@ -28,12 +28,12 @@ describe('loadEnv', () => {
       ...base,
       PUSH_ADAPTER: 'fcm',
       STORAGE_ADAPTER: 'firebase',
-      FIREBASE_STORAGE_BUCKET: 'demo-template.appspot.com',
+      FIREBASE_STORAGE_BUCKET: 'demo-daftar-belanja.appspot.com',
     });
 
     expect(env.PUSH_ADAPTER).toBe('fcm');
     expect(env.STORAGE_ADAPTER).toBe('firebase');
-    expect(env.FIREBASE_STORAGE_BUCKET).toBe('demo-template.appspot.com');
+    expect(env.FIREBASE_STORAGE_BUCKET).toBe('demo-daftar-belanja.appspot.com');
   });
 
   it.each([
@@ -66,7 +66,7 @@ describe('loadEnv', () => {
         ...production,
         PUSH_ADAPTER: 'fcm',
         STORAGE_ADAPTER: 'firebase',
-        FIREBASE_STORAGE_BUCKET: 'demo-template.appspot.com',
+        FIREBASE_STORAGE_BUCKET: 'demo-daftar-belanja.appspot.com',
       }),
     ).toMatchObject({ PUSH_ADAPTER: 'fcm', STORAGE_ADAPTER: 'firebase' });
   });

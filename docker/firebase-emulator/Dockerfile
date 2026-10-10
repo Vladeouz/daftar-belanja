@@ -19,7 +19,7 @@ RUN firebase setup:emulators:storage
 WORKDIR /firebase
 
 ENV FIREBASE_EMULATORS=auth
-ENV FIREBASE_PROJECT_ID=demo-template
+ENV FIREBASE_PROJECT_ID=demo-daftar-belanja
 
 EXPOSE 9099 9199
 CMD ["sh", "-c", "exec firebase emulators:start --only \"$FIREBASE_EMULATORS\" --project \"$FIREBASE_PROJECT_ID\""]

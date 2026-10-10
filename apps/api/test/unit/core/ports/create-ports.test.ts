@@ -71,7 +71,7 @@ describe('createPorts', () => {
       {
         ...fakes,
         STORAGE_ADAPTER: 'firebase',
-        FIREBASE_STORAGE_BUCKET: 'demo-template.appspot.com',
+        FIREBASE_STORAGE_BUCKET: 'demo-daftar-belanja.appspot.com',
       },
       app,
     );
@@ -79,7 +79,7 @@ describe('createPorts', () => {
     await fileStorage.save('a.txt', Buffer.from('x'), { contentType: 'text/plain' });
 
     expect(getStorage).toHaveBeenCalledWith(app);
-    expect(storage.bucket).toHaveBeenCalledWith('demo-template.appspot.com');
+    expect(storage.bucket).toHaveBeenCalledWith('demo-daftar-belanja.appspot.com');
     expect(bucket.file).toHaveBeenCalledWith('a.txt');
     expect(file.save).toHaveBeenCalledOnce();
     expect(getMessaging).not.toHaveBeenCalled();

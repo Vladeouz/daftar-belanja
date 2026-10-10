@@ -9,7 +9,7 @@ import {
 // Helper Auth Emulator (docker compose, port 9099) untuk integration test. Akun dibuat dengan
 // email acak, jadi tidak perlu membersihkan emulator dan akun buatan manual tidak tersentuh.
 
-const PROJECT_ID = process.env.FIREBASE_PROJECT_ID ?? 'demo-template';
+const PROJECT_ID = process.env.FIREBASE_PROJECT_ID ?? 'demo-daftar-belanja';
 const EMULATOR_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? 'localhost:9099';
 const IDENTITY_TOOLKIT = `http://${EMULATOR_HOST}/identitytoolkit.googleapis.com/v1`;
 
