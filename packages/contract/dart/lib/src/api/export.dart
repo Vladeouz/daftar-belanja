@@ -6,6 +6,7 @@
 export 'system/system_client.dart';
 export 'users/users_client.dart';
 export 'notes/notes_client.dart';
+export 'shopping/shopping_client.dart';
 // Data classes
 export 'models/health.dart';
 export 'models/user.dart';
@@ -17,6 +18,11 @@ export 'models/note_page.dart';
 export 'models/note.dart';
 export 'models/create_note_input.dart';
 export 'models/update_note_input.dart';
+export 'models/shopping_item_page.dart';
+export 'models/shopping_item.dart';
+export 'models/shopping_item_status.dart';
+export 'models/create_shopping_item_input.dart';
+export 'models/update_shopping_item_input.dart';
 export 'models/health_status.dart';
 // Root client
 export 'api_client.dart';

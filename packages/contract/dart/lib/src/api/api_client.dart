@@ -7,6 +7,7 @@ import 'package:dio/dio.dart';
 import 'system/system_client.dart';
 import 'users/users_client.dart';
 import 'notes/notes_client.dart';
+import 'shopping/shopping_client.dart';
 
 /// API `v1`
 class ApiClient {
@@ -24,10 +25,13 @@ class ApiClient {
   SystemClient? _system;
   UsersClient? _users;
   NotesClient? _notes;
+  ShoppingClient? _shopping;
 
   SystemClient get system => _system ??= SystemClient(_dio, baseUrl: _baseUrl);
 
   UsersClient get users => _users ??= UsersClient(_dio, baseUrl: _baseUrl);
 
   NotesClient get notes => _notes ??= NotesClient(_dio, baseUrl: _baseUrl);
+
+  ShoppingClient get shopping => _shopping ??= ShoppingClient(_dio, baseUrl: _baseUrl);
 }

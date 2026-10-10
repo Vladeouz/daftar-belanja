@@ -16,6 +16,12 @@ import { deleteNote } from './features/notes/usecases/delete-note.js';
 import { getNote } from './features/notes/usecases/get-note.js';
 import { listNotes } from './features/notes/usecases/list-notes.js';
 import { updateNote } from './features/notes/usecases/update-note.js';
+import { registerShoppingItemRoutes } from './features/shopping/http/shopping-items.route.js';
+import { createDrizzleShoppingItemRepository } from './features/shopping/infrastructure/drizzle-shopping-item-repository.js';
+import { createShoppingItem } from './features/shopping/usecases/create-shopping-item.js';
+import { deleteShoppingItem } from './features/shopping/usecases/delete-shopping-item.js';
+import { listShoppingItems } from './features/shopping/usecases/list-shopping-items.js';
+import { updateShoppingItem } from './features/shopping/usecases/update-shopping-item.js';
 import { registerHealthRoutes } from './features/system/http/health.route.js';
 import { registerUserRoutes } from './features/users/http/me.route.js';
 import { createDrizzleUserRepository } from './features/users/infrastructure/drizzle-user-repository.js';
@@ -61,6 +67,14 @@ export function createApp({
     getNote: getNote({ notes }),
     updateNote: updateNote({ notes }),
     deleteNote: deleteNote({ notes }),
+  });
+
+  const shoppingItems = createDrizzleShoppingItemRepository(db);
+  registerShoppingItemRoutes(app, {
+    listShoppingItems: listShoppingItems({ shoppingItems }),
+    createShoppingItem: createShoppingItem({ shoppingItems }),
+    updateShoppingItem: updateShoppingItem({ shoppingItems }),
+    deleteShoppingItem: deleteShoppingItem({ shoppingItems }),
   });
 
   return app;
