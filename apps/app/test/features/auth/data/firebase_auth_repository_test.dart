@@ -7,6 +7,8 @@ import 'package:app/core/error/result.dart';
 import 'package:app/features/auth/data/firebase_auth_repository.dart';
 import 'package:app/features/auth/domain/entities/auth_user.dart';
 
+import '../../../core/error/debug_print_capture.dart';
+
 class MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
 class MockUser extends Mock implements User {}
@@ -91,6 +93,31 @@ void main() {
       );
     });
   });
+
+  test(
+    'FirebaseAuthException → pesan asli Firebase dicatat (mode debug)',
+    () async {
+      final printed = captureDebugPrint();
+      when(
+        () => auth.signInWithEmailAndPassword(
+          email: any(named: 'email'),
+          password: any(named: 'password'),
+        ),
+      ).thenThrow(
+        FirebaseAuthException(
+          code: 'unknown',
+          message: 'API key not valid. Please pass a valid API key.',
+        ),
+      );
+
+      await repository.signIn(email: 'a@example.com', password: 'rahasia');
+
+      expect(printed, [
+        'Failure unknown: firebase_auth/unknown: '
+            'API key not valid. Please pass a valid API key.',
+      ]);
+    },
+  );
 
   group('register', () {
     test('berhasil → Ok(AuthUser)', () async {

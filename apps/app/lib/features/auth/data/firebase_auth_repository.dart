@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'package:app/core/error/failure.dart';
+import 'package:app/core/error/failure_log.dart';
 import 'package:app/core/error/result.dart';
 import 'package:app/features/auth/data/auth_mapper.dart';
 import 'package:app/features/auth/domain/entities/auth_user.dart';
@@ -8,7 +10,7 @@ import 'package:app/features/auth/domain/repositories/auth_repository.dart';
 /// [AuthRepository] di atas Firebase Auth (Auth Emulator bila `USE_EMULATOR=true`, lihat `main.dart`).
 ///
 /// SDK Firebase berperan sebagai data source; `FirebaseAuthException` → `Err` lewat
-/// [failureFromFirebaseAuth].
+/// [failureFromFirebaseAuth] dan dicatat [logFailure] (mode debug).
 class FirebaseAuthRepository implements AuthRepository {
   FirebaseAuthRepository(this._auth);
 
@@ -48,7 +50,7 @@ class FirebaseAuthRepository implements AuthRepository {
       await _auth.signOut();
       return const Ok(null);
     } on FirebaseAuthException catch (e) {
-      return Err(failureFromFirebaseAuth(e));
+      return Err(_failure(e));
     }
   }
 
@@ -59,7 +61,13 @@ class FirebaseAuthRepository implements AuthRepository {
       final credential = await action();
       return Ok(authUserFromFirebase(credential.user!));
     } on FirebaseAuthException catch (e) {
-      return Err(failureFromFirebaseAuth(e));
+      return Err(_failure(e));
     }
+  }
+
+  Failure _failure(FirebaseAuthException e) {
+    final failure = failureFromFirebaseAuth(e);
+    logFailure(failure);
+    return failure;
   }
 }

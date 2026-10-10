@@ -389,20 +389,21 @@ features/auth/
 ### Result dan Failure
 
 - Repository dan use case mengembalikan `Result<T>` (`core/error/result.dart`): sealed `Ok(value)` / `Err(failure)`, dibaca dengan `switch`. Exception tidak dilempar melewati batas repository.
-- `Failure` (`core/error/failure.dart`) adalah kelas Dart murni (tanpa dio atau DTO) berisi `FailureCode`, `message` (Inggris, untuk log), dan `fieldErrors` (`Map<String, List<FieldIssue>>`, dari `details` 422 dengan kunci path yang sama: `title`, `items.0.name`, `_root`).
+- `Failure` (`core/error/failure.dart`) adalah kelas Dart murni (tanpa dio atau DTO) berisi `FailureCode`, `message` (Inggris, untuk log), dan `fieldErrors` (`Map<String, List<FieldIssue>>`, dari `details` 422 dengan kunci path yang sama: `name`, `items.0.name`, `_root`).
+- **Kegagalan dicatat di mode debug** (T-007): setiap batas yang mengubah exception menjadi `Failure` memanggil `logFailure(failure)` (`core/error/failure_log.dart`), yang mencetak `Failure <code>: <message> (fields: …)` lewat `debugPrint` hanya bila `kDebugMode`; di mode rilis tidak mencatat apa pun. Saat ini batasnya `apiCall` (semua panggilan API) dan `FirebaseAuthRepository`; batas baru (data source lain, SDK lain) memanggilnya juga. Mapper (`failureFromDioException`, `failureFromFirebaseAuth`) tetap murni tanpa efek samping. Pesan tampil di konsol `flutter run` dan DevTools, jadi kegagalan yang ke user hanya tampil sebagai teks umum (misalnya `FailureCode.unknown`) tetap bisa dilacak. Test memeriksa output dengan `captureDebugPrint()` (`test/core/error/debug_print_capture.dart`).
 - `FailureCode` = setiap `ErrorCode` kontrak + `network` (gagal koneksi/timeout) + `unknown` (kode belum dikenal atau body tidak terbaca).
 
 ### Network
 
 - Dio dibuat `createDio()` (`core/network/create_dio.dart`) dengan `baseUrl` dari config dan `AuthInterceptor`; `ApiClient` dari `api_client` memakai Dio itu.
 - `AuthInterceptor` menambahkan `Authorization: Bearer <ID token>` dari `TokenProvider` (`FirebaseTokenProvider` → `currentUser.getIdToken()`) bila user login. Respons `401` → token di-refresh sekali (`forceRefresh`) dan request diulang sekali (penanda `extra['authRetried']`); `401` kedua, gagal refresh, atau user tidak login → error diteruskan.
-- Repository memanggil `api_client` lewat `apiCall(() => _remote.create(name: name), map: shoppingItemFromDto)` (`core/network/api_call.dart`): `DioException` → `Err(failureFromDioException(e))`. Exception lain (bug mapper) tidak ditangkap.
+- Repository memanggil `api_client` lewat `apiCall(() => _remote.create(name: name), map: shoppingItemFromDto)` (`core/network/api_call.dart`): `DioException` → `Err(failureFromDioException(e))`, dicatat `logFailure`. Exception lain (bug mapper) tidak ditangkap.
 - `failureFromDioException` (`core/network/error_mapper.dart`) membaca body `ErrorBody` dan memetakan `ErrorCode` lewat `failureCodeOf` (switch tanpa `default`: kode baru di kontrak membuat `flutter analyze` gagal sampai dipetakan).
 
 ### Teks UI dan l10n
 
 - Teks UI Bahasa Indonesia ditulis langsung di widget (satu bahasa, tanpa ARB). `AppLocale` (`core/l10n/app_locale.dart`) memasang locale `id` dan delegate Material/Cupertino agar teks bawaan widget juga Bahasa Indonesia.
-- D-03: teks kegagalan untuk user hanya dari `failureMessage(FailureCode)` dan `fieldIssueMessage(FieldIssue)` di `core/l10n/failure_messages.dart`, dengan `genericFailureMessage` sebagai cadangan. `Failure.message` dari server tidak pernah ditampilkan.
+- D-03: teks kegagalan untuk user hanya dari `failureMessage(FailureCode)` dan `fieldIssueMessage(FieldIssue)` di `core/l10n/failure_messages.dart`, dengan `genericFailureMessage` sebagai cadangan. `Failure.message` dari server tidak pernah ditampilkan ke user; hanya dicatat di konsol saat mode debug (`logFailure`).
 
 ### DI dan router
 
